@@ -27,7 +27,8 @@ const hasAnySourceInfo = Boolean(validRepoUrl || cleanExamplePath || cleanTestsP
 function buildRepoSubpath(base: string, subpath: string): string {
   const trimmedBase = base.replace(/\/+$/, '');
   if (trimmedBase.includes('github.com')) {
-    return `${trimmedBase}/tree/main/${subpath}`;
+    const kind = !subpath.endsWith('/') && subpath.includes('.') ? 'blob' : 'tree';
+    return `${trimmedBase}/${kind}/main/${subpath}`;
   }
   return trimmedBase;
 }

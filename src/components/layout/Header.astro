@@ -1,0 +1,73 @@
+---
+import { siteConfig } from '@/config/site';
+import Container from './Container.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import MobileNav from './MobileNav.astro';
+
+const currentPath = Astro.url.pathname;
+
+function isActive(href: string, path: string): boolean {
+  if (href === '/') return path === '/';
+  return path.startsWith(href);
+}
+---
+
+<header
+  class="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--bg-primary)]/92 backdrop-blur-md"
+>
+  <Container>
+    <div class="flex h-16 items-center justify-between gap-4">
+      <a
+        href="/"
+        class="group inline-flex shrink-0 items-center gap-2.5 rounded-md py-1 text-[var(--text-primary)]"
+      >
+        <span
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] font-mono text-xs font-bold tracking-tight text-[var(--accent)] transition-colors group-hover:border-[var(--accent)]"
+        >
+          {siteConfig.monogram}
+        </span>
+        <span class="text-sm font-semibold tracking-tight sm:text-base">
+          {siteConfig.siteName}
+        </span>
+      </a>
+
+      <nav aria-label="Primary navigation" class="hidden md:block">
+        <ul class="flex items-center gap-1">
+          {
+            siteConfig.navigation.map((item) => {
+              const active = isActive(item.href, currentPath);
+              return (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    class={`relative inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                      active
+                        ? 'text-[var(--accent)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {active && (
+                      <span
+                        aria-hidden="true"
+                        class="absolute inset-x-3 -bottom-[15px] h-0.5 rounded-full bg-[var(--accent)]"
+                      />
+                    )}
+                  </a>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <ThemeToggle />
+        <MobileNav currentPath={currentPath} part="button" />
+      </div>
+    </div>
+  </Container>
+
+  <MobileNav currentPath={currentPath} part="drawer" />
+</header>

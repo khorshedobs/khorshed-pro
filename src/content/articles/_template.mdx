@@ -1,0 +1,113 @@
+---
+title: "PHP X.Y Feature Name: Concise Technical Subtitle"
+description: "One-to-two sentence summary explaining what problem this feature solves and what the article covers."
+publishedAt: 2026-11-18
+draft: true
+status: "draft"
+featured: false
+category: "PHP"
+tags:
+  - "php"
+  - "modern-php"
+series: "modern-php-mastery"
+seriesOrder: 10
+phpVersion: "8.4"
+minimumPhpVersion: "8.4"
+testedPhpVersions: []
+requiredExtensions: []
+difficulty: "Intermediate"
+author: "Khorshed Alam"
+# repositoryURL: "https://github.com/your-username/your-examples-repo"
+# examplePath: "examples/php-8-4/feature-slug/"
+# testsPath: "examples/php-8-4/feature-slug/tests/FeatureTest.php"
+relatedArticles: []
+isSampleContent: false
+---
+import CodeComparison from '@/components/article/CodeComparison.astro';
+import Callout from '@/components/article/Callout.astro';
+
+{/* Delete any sections that do not genuinely help the reader for a specific topic. */}
+
+## Introduction
+
+Briefly introduce the engineering problem and the PHP version or ecosystem shift covered in this article.
+
+<Callout type="compatibility" title="PHP Compatibility">
+  State exact version requirements and distinguish introduced version from verified test runtimes.
+</Callout>
+
+## The Problem
+
+Describe the limitation, boilerplate, or failure mode developers encountered prior to this feature.
+
+## How It Worked Before
+
+Show the idiomatic earlier pattern concisely.
+
+```php title="src/BeforeExample.php" php="8.3" showLineNumbers
+<?php
+
+declare(strict_types=1);
+```
+
+## The New PHP Feature: Syntax and Behavior
+
+Explain the language mechanics, evaluation order, and type-system guarantees accurately.
+
+```php title="src/AfterExample.php" php="8.4" showLineNumbers highlight={5-7} caption="Highlight key lines and include concise captions."
+<?php
+
+declare(strict_types=1);
+```
+
+## Before and After Comparison
+
+<CodeComparison
+  title="Legacy Pattern vs. Modern Approach"
+  description="Compare readability, boilerplate, and safety guarantees side by side."
+  summary="Summarize the practical trade-off in one clear sentence."
+  before={{
+    label: "Before",
+    version: "PHP 8.3",
+    language: "php",
+    file: "Before.php",
+    code: `// Earlier implementation`,
+  }}
+  after={{
+    label: "After",
+    version: "PHP 8.4",
+    language: "php",
+    file: "After.php",
+    code: `// Modern implementation`,
+  }}
+/>
+
+## Practical Example
+
+Walk through a realistic domain model, service, or integration scenario backed by verified files in `examples/`.
+
+## Edge Cases and Limitations
+
+Document runtime restrictions, static analysis caveats, or invalid combinations verified against PHP.
+
+<Callout type="warning" title="Key Caveat">
+  Highlight subtle runtime errors or constraints readers are likely to hit.
+</Callout>
+
+## Performance and Security Considerations
+
+Note memory, OPcache, validation, or untrusted-input implications only when technically relevant.
+
+## When to Use It — and When Not To
+
+- **Use it when:** List concrete conditions where the feature simplifies code cleanly.
+- **Avoid it when:** List scenarios where traditional methods or explicit control flow remain clearer.
+
+## Key Takeaways
+
+- Concise summary point one.
+- Concise summary point two.
+
+## Official References
+
+- Link to the official PHP documentation or accepted RFC.

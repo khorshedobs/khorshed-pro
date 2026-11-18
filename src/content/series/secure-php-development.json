@@ -1,0 +1,14 @@
+{
+  "title": "Secure PHP Development",
+  "subtitle": "Defensive Engineering for Production Web Applications",
+  "description": "Upcoming series exploring input validation, cryptographic primitives, webhook verification, and secure defaults in modern PHP applications.",
+  "status": "Planned",
+  "featured": false,
+  "order": 5,
+  "topics": [
+    "Input Validation",
+    "Authentication & Sessions",
+    "Webhook Security",
+    "Dependency Hygiene"
+  ]
+}

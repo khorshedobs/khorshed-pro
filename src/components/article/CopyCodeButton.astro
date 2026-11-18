@@ -1,0 +1,20 @@
+---
+import { Check, Copy } from '@lucide/astro';
+
+interface Props {
+  label?: string;
+}
+
+const { label = 'Copy' } = Astro.props;
+---
+
+<button
+  type="button"
+  class="code-copy-btn"
+  data-copy-code
+  aria-label="Copy code to clipboard"
+>
+  <Copy class="copy-icon h-3.5 w-3.5" aria-hidden="true" />
+  <Check class="check-icon hidden h-3.5 w-3.5" aria-hidden="true" />
+  <span class="copy-label">{label}</span>
+</button>

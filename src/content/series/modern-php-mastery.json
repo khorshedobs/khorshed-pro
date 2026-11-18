@@ -1,0 +1,15 @@
+{
+  "title": "Modern PHP Mastery: 8.0 → 8.6",
+  "subtitle": "From Modern Syntax to Advanced Engineering",
+  "description": "Exploring modern PHP features through practical examples, deeper engineering insights, and real-world applications.",
+  "phpVersionRange": "8.0 → 8.6",
+  "status": "Active",
+  "featured": true,
+  "order": 1,
+  "topics": [
+    "Language Evolution",
+    "Type System & Ergonomics",
+    "Functional Composition",
+    "Maintainable Domain Models"
+  ]
+}

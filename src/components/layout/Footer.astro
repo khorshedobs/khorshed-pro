@@ -1,0 +1,139 @@
+---
+import { Rss } from '@lucide/astro';
+import { getConfiguredSocials, siteConfig } from '@/config/site';
+import SocialIcon from '@/components/ui/SocialIcon.astro';
+import Container from './Container.astro';
+
+const currentYear = new Date().getUTCFullYear();
+const socials = getConfiguredSocials();
+---
+
+<footer class="mt-24 border-t border-[var(--border-color)] bg-[var(--bg-surface)]">
+  <Container class="py-12 sm:py-14">
+    <div class="grid gap-10 md:grid-cols-12">
+      <div class="md:col-span-6">
+        <a
+          href="/"
+          class="inline-flex items-center gap-2.5 text-[var(--text-primary)]"
+        >
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] font-mono text-xs font-bold text-[var(--accent)]"
+          >
+            {siteConfig.monogram}
+          </span>
+          <span class="text-base font-semibold tracking-tight">
+            {siteConfig.siteName}
+          </span>
+        </a>
+        <p class="mt-3 max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
+          {siteConfig.heroDescription}
+        </p>
+
+        {
+          socials.length > 0 && (
+            <div class="mt-5 flex flex-wrap items-center gap-2" aria-label="Social links">
+              {socials.map((profile) => (
+                <a
+                  href={profile.href}
+                  aria-label={profile.label}
+                  title={profile.label}
+                  target={profile.key === 'email' ? undefined : '_blank'}
+                  rel={profile.key === 'email' ? undefined : 'noopener noreferrer'}
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+                >
+                  <SocialIcon network={profile.key} class="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </div>
+
+      <div class="grid grid-cols-2 gap-8 md:col-span-6">
+        <div>
+          <h2 class="text-xs font-semibold tracking-wider text-[var(--text-primary)] uppercase">
+            Navigation
+          </h2>
+          <ul class="mt-3.5 space-y-2.5 text-sm">
+            <li>
+              <a
+                href="/"
+                class="text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                Home
+              </a>
+            </li>
+            {
+              siteConfig.navigation.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    class="text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="text-xs font-semibold tracking-wider text-[var(--text-primary)] uppercase">
+            Publication
+          </h2>
+          <ul class="mt-3.5 space-y-2.5 text-sm">
+            <li>
+              <a
+                href="/series/modern-php-mastery/"
+                class="text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                Modern PHP Mastery
+              </a>
+            </li>
+            <li>
+              <a
+                href="/rss.xml"
+                class="inline-flex items-center gap-1.5 text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                <Rss class="h-3.5 w-3.5 text-[var(--accent)]" aria-hidden="true" />
+                <span>RSS Feed</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="/sitemap-index.xml"
+                class="text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                XML Sitemap
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="mt-12 flex flex-col gap-3 border-t border-[var(--border-color)] pt-6 text-xs text-[var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>
+        &copy; {currentYear} {siteConfig.siteName}. All rights reserved.
+      </p>
+      <p>
+        <a
+          href="/rss.xml"
+          class="transition-colors hover:text-[var(--text-primary)]"
+        >
+          RSS
+        </a>
+        <span class="mx-2" aria-hidden="true">&middot;</span>
+        <a
+          href="/sitemap-index.xml"
+          class="transition-colors hover:text-[var(--text-primary)]"
+        >
+          Sitemap
+        </a>
+      </p>
+    </div>
+  </Container>
+</footer>

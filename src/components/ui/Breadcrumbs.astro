@@ -1,0 +1,85 @@
+---
+import { ChevronRight } from '@lucide/astro';
+
+export interface BreadcrumbItem {
+  label: string;
+  shortLabel?: string;
+  href?: string;
+  hideOnMobile?: boolean;
+}
+
+interface Props {
+  items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+const collapseOnMobile = items.length > 2;
+
+const mobileVisibleFlags = items.map((item, index) => {
+  if (item.hideOnMobile) return false;
+  if (!collapseOnMobile) return true;
+  return index >= items.length - 2 || Boolean(items.some((it) => it.hideOnMobile) && index === 1);
+});
+
+// Ensure only the immediate parent + current page show if custom hideOnMobile isn't narrowing to 2
+const firstMobileIndex = mobileVisibleFlags.findIndex(Boolean);
+---
+
+<nav aria-label="Breadcrumb" class="mb-5">
+  <ol class="flex min-w-0 flex-nowrap items-center gap-1.5 text-xs text-[var(--text-secondary)] sm:text-sm">
+    {
+      items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        const isMobileVisible = mobileVisibleFlags[index];
+        const showLeadingChevron = index > 0;
+        const isFirstMobileVisible = index === firstMobileIndex;
+
+        return (
+          <li
+            class={`items-center gap-1.5 ${
+              isLast ? 'min-w-0 flex-1' : 'shrink-0'
+            } ${isMobileVisible ? 'inline-flex' : 'hidden sm:inline-flex'}`}
+          >
+            {showLeadingChevron && (
+              <ChevronRight
+                class={`h-3.5 w-3.5 shrink-0 text-[var(--text-secondary)] opacity-70 ${
+                  isFirstMobileVisible ? 'hidden sm:inline-block' : ''
+                }`}
+                aria-hidden="true"
+              />
+            )}
+            {item.href && !isLast ? (
+              <a
+                href={item.href}
+                class="whitespace-nowrap transition-colors hover:text-[var(--text-primary)]"
+              >
+                {item.shortLabel ? (
+                  <>
+                    <span class="sm:hidden">{item.shortLabel}</span>
+                    <span class="hidden sm:inline">{item.label}</span>
+                  </>
+                ) : (
+                  item.label
+                )}
+              </a>
+            ) : (
+              <span
+                class="block truncate font-medium text-[var(--text-primary)]"
+                aria-current={isLast ? 'page' : undefined}
+              >
+                {item.shortLabel ? (
+                  <>
+                    <span class="sm:hidden">{item.shortLabel}</span>
+                    <span class="hidden sm:inline">{item.label}</span>
+                  </>
+                ) : (
+                  item.label
+                )}
+              </span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</nav>

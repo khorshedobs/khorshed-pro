@@ -1,0 +1,79 @@
+---
+import { Info } from '@lucide/astro';
+import { getAllProjects } from '@/lib/content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+import Badge from '@/components/ui/Badge.astro';
+import EmptyState from '@/components/ui/EmptyState.astro';
+import ProjectCard from '@/components/projects/ProjectCard.astro';
+
+const projects = await getAllProjects();
+const hasOnlyBlueprints = projects.length > 0 && projects.every((p) => p.data.isSample);
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Projects' },
+];
+---
+
+<BaseLayout
+  title="Projects"
+  description="Software engineering portfolio and architecture blueprints across PHP, Laravel, WordPress plugins, and backend tooling."
+  breadcrumbs={breadcrumbs}
+>
+  <Container class="py-12 sm:py-16">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <header class="flex flex-col gap-4 border-b border-[var(--border-color)] pb-9 sm:flex-row sm:items-end sm:justify-between">
+      <div class="max-w-2xl">
+        <p class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+          Engineering Portfolio
+        </p>
+        <h1 class="heading-page mt-2">Projects</h1>
+        <p class="mt-3.5 text-base leading-relaxed text-[var(--text-secondary)] sm:text-lg">
+          Software engineering work and architecture blueprints detailing technical constraints,
+          problem framing, and backend design decisions.
+        </p>
+      </div>
+
+      <Badge variant="subtle">
+        {`${projects.length} ${projects.length === 1 ? 'entry' : 'entries'}`}
+      </Badge>
+    </header>
+
+    {
+      hasOnlyBlueprints && (
+        <div class="mt-8 flex items-start gap-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 text-sm text-[var(--text-secondary)]">
+          <Info class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+          <p class="leading-relaxed">
+            <strong class="text-[var(--text-primary)]">Architecture Blueprints:</strong> The entries
+            below document in-development open-source and backend architecture blueprints rather than
+            completed public releases. Live repository links and case studies will be added as each
+            project ships.
+          </p>
+        </div>
+      )
+    }
+
+    <section aria-label="Projects list" class="mt-10">
+      {
+        projects.length > 0 ? (
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => (
+              <ProjectCard project={project} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon="projects"
+            title="Selected work coming soon"
+            description="Open-source packages, plugins, and backend engineering case studies will appear here as they are published."
+            actionLabel="Explore Articles"
+            actionHref="/articles/"
+          />
+        )
+      }
+    </section>
+  </Container>
+</BaseLayout>

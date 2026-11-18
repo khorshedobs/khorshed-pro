@@ -1,0 +1,48 @@
+---
+title: "Laravel Idempotency Guard"
+summary: "HTTP idempotency-key middleware design with atomic lock acquisition, payload digest verification, and deterministic response replay."
+description: "A Laravel backend blueprint demonstrating safe POST retry handling for payment, billing, and webhook ingestion endpoints."
+projectType: "Laravel Application"
+technologies:
+  - "PHP"
+  - "Laravel"
+  - "SQL"
+  - "Redis"
+featured: true
+draft: false
+status: "Blueprint"
+isSample: true
+order: 3
+problem: "Mobile clients and webhook providers routinely retry POST requests after network drops, risking duplicate charges or repeated state transitions when endpoints lack idempotency guarantees."
+solution: "Implement deterministic request fingerprinting coupled with atomic lock acquisition and cached response replay keyed by client-provided idempotency headers."
+keyFeatures:
+  - "Atomic key locking to prevent concurrent duplicate execution"
+  - "Request payload digest verification to detect conflicting key reuse"
+  - "Deterministic replay of original HTTP status codes and JSON bodies"
+  - "Configurable retention window with automated cleanup"
+technicalDecisions:
+  - "Hash the normalized request body alongside the route signature to reject accidental key reuse with different payloads."
+  - "Fail fast with 409 Conflict when an identical idempotency key is still actively processing."
+  - "Keep storage backend behind a clean repository contract."
+---
+
+## Overview
+
+Idempotency is critical whenever state-changing operations cannot safely run twice. This architectural design enforces strict single-execution semantics behind standard HTTP `Idempotency-Key` headers.
+
+## Storage Schema
+
+```sql title="database/migrations/idempotency_keys.sql"
+CREATE TABLE idempotency_keys (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    idempotency_key VARCHAR(128) NOT NULL UNIQUE,
+    request_hash CHAR(64) NOT NULL,
+    response_status SMALLINT UNSIGNED NULL,
+    response_body MEDIUMTEXT NULL,
+    expires_at TIMESTAMP NOT NULL
+);
+```
+
+## Request Lifecycle
+
+Incoming requests compute a normalized SHA-256 digest of the method, route, and body; acquire an atomic lock on the key; execute the controller action once; and persist the serialized response for deterministic replay within the retention window.

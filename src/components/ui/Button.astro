@@ -1,0 +1,62 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md';
+  external?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  class?: string;
+  ariaLabel?: string;
+}
+
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  external = false,
+  type = 'button',
+  class: className = '',
+  ariaLabel,
+  ...rest
+} = Astro.props as Props & HTMLAttributes<'a'> & HTMLAttributes<'button'>;
+
+const baseStyles =
+  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2';
+
+const sizeStyles = {
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2.5 text-sm',
+}[size];
+
+const variantStyles = {
+  primary:
+    'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] border border-transparent shadow-xs',
+  secondary:
+    'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--accent)] hover:bg-[var(--bg-elevated)]',
+  ghost:
+    'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent',
+}[variant];
+
+const classes = `${baseStyles} ${sizeStyles} ${variantStyles} ${className}`.trim();
+---
+
+{
+  href ? (
+    <a
+      href={href}
+      class={classes}
+      aria-label={ariaLabel}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
+      {...rest}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={classes} aria-label={ariaLabel} {...rest}>
+      <slot />
+    </button>
+  )
+}

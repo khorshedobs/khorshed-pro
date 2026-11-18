@@ -1,0 +1,48 @@
+---
+title: "PHP Schema Validator"
+summary: "Typed schema validation blueprint for normalizing and validating nested request payloads and configuration objects in modern PHP."
+description: "An open-source PHP library blueprint exploring deterministic field-level error paths, immutable schema rules, and zero-dependency validation."
+projectType: "Open-Source Library"
+technologies:
+  - "PHP 8.4"
+  - "Pest"
+  - "JSON Schema"
+  - "Static Analysis"
+featured: true
+draft: false
+status: "Blueprint"
+isSample: true
+order: 1
+problem: "API endpoints and webhook consumers frequently duplicate ad-hoc array validation checks across controllers and request classes, leading to inconsistent error payloads and brittle runtime behavior."
+solution: "Design a composable schema definition layer in modern PHP that validates nested input structures, normalizes scalar types safely, and returns structured field-level diagnostics."
+keyFeatures:
+  - "Typed schema rules for strings, integers, nested objects, and lists"
+  - "Deterministic error paths suitable for REST API validation responses"
+  - "Zero runtime dependencies outside the PHP standard library"
+  - "Unit-tested rule composition with clear extension points"
+technicalDecisions:
+  - "Favor explicit value-object rules over reflection-heavy attribute magic to keep stack traces transparent."
+  - "Separate input normalization from constraint validation so callers can inspect raw vs. sanitized errors."
+  - "Keep rules immutable so schemas can be safely reused across long-running workers."
+---
+
+## Overview
+
+This architecture blueprint explores a clean, dependency-free validation layer for PHP 8.4+ applications—prioritizing readable schema declarations, deterministic error formatting, and strict static analysis compatibility.
+
+## Target Usage Design
+
+```php title="examples/validate-payload.php"
+<?php
+
+declare(strict_types=1);
+
+$rules = [
+    'title' => ['required', 'string', 'max:140'],
+    'published' => ['boolean'],
+];
+```
+
+## Engineering Scope
+
+Key focus areas include avoiding reflection overhead on hot validation paths, separating scalar coercion from strict constraint checking, and producing predictable JSON-friendly error structures.

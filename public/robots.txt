@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://khorshed.pro/sitemap-index.xml

@@ -1,0 +1,200 @@
+---
+import { ArrowRight, Calendar, ExternalLink, MapPin, Mic } from '@lucide/astro';
+import { speakingAppearances, speakingTopicProposals } from '@/config/speaking';
+import { formatDate, formatIsoDate } from '@/lib/date';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+import Badge from '@/components/ui/Badge.astro';
+import Button from '@/components/ui/Button.astro';
+import EmptyState from '@/components/ui/EmptyState.astro';
+import SectionHeading from '@/components/ui/SectionHeading.astro';
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Speaking' },
+];
+
+const sortedAppearances = [...speakingAppearances].sort(
+  (a, b) => b.date.getTime() - a.date.getTime(),
+);
+---
+
+<BaseLayout
+  title="Speaking"
+  description="Conference sessions, technical talks, available speaking topics, and invitation guidelines for Khorshed Alam."
+  breadcrumbs={breadcrumbs}
+>
+  <Container class="py-12 sm:py-16">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <header class="max-w-3xl">
+      <p class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+        Speaking &amp; Community
+      </p>
+      <h1 class="heading-page mt-2">Speaking &amp; Technical Sessions</h1>
+      <p class="mt-4 text-lg leading-relaxed text-[var(--text-secondary)]">
+        Talk proposals, engineering workshops, and a structured archive for conference sessions,
+        slides, and recordings.
+      </p>
+    </header>
+
+    <!-- Speaking Inquiry Invitation -->
+    <section
+      aria-labelledby="speaking-invite-heading"
+      class="mt-10 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-8"
+    >
+      <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div class="max-w-2xl">
+          <div class="mb-2 inline-flex items-center gap-2 text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+            <Mic class="h-4 w-4" aria-hidden="true" />
+            <span>Speaking Inquiries</span>
+          </div>
+          <h2
+            id="speaking-invite-heading"
+            class="text-xl font-bold text-[var(--text-primary)]"
+          >
+            Invite me to speak at your event or engineering meetup
+          </h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+            Available for conference talks, local developer meetups, technical podcasts, and
+            focused engineering workshops on modern PHP, Laravel, WordPress architecture, and
+            backend reliability.
+          </p>
+        </div>
+
+        <div class="shrink-0">
+          <Button href="/contact/" variant="primary">
+            <span>Speaking inquiries</span>
+            <ArrowRight class="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sessions Archive -->
+    <section aria-labelledby="appearances-heading" class="mt-14">
+      <SectionHeading
+        id="appearances-heading"
+        eyebrow="Archive"
+        title="Conferences & Appearances"
+        description="Confirmed sessions, presentation slides, and recorded talks."
+      />
+
+      {
+        sortedAppearances.length > 0 ? (
+          <div class="space-y-4">
+            {sortedAppearances.map((talk) => (
+              <article class="editorial-card p-6">
+                <div class="flex flex-wrap items-center gap-2">
+                  <Badge variant="accent">{talk.format}</Badge>
+                  <span class="inline-flex items-center gap-1 text-xs text-[var(--text-secondary)]">
+                    <Calendar class="h-3.5 w-3.5" aria-hidden="true" />
+                    <time datetime={formatIsoDate(talk.date)}>
+                      {formatDate(talk.date)}
+                    </time>
+                  </span>
+                  <span class="inline-flex items-center gap-1 text-xs text-[var(--text-secondary)]">
+                    <MapPin class="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>{talk.location}</span>
+                  </span>
+                </div>
+
+                <h3 class="mt-3 text-lg font-semibold text-[var(--text-primary)]">
+                  {talk.title}
+                </h3>
+                <p class="mt-1 text-sm font-medium text-[var(--accent)]">
+                  {talk.event}
+                </p>
+                <p class="mt-2.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+                  {talk.summary}
+                </p>
+
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border-color)] pt-4">
+                  <ul class="flex flex-wrap gap-1.5">
+                    {talk.topics.map((topic) => (
+                      <li class="rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
+                        {topic}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div class="flex flex-wrap gap-3 text-xs font-medium">
+                    {talk.slidesUrl && (
+                      <a
+                        href={talk.slidesUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                      >
+                        <span>Slides</span>
+                        <ExternalLink class="h-3 w-3" aria-hidden="true" />
+                      </a>
+                    )}
+                    {talk.recordingUrl && (
+                      <a
+                        href={talk.recordingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                      >
+                        <span>Recording</span>
+                        <ExternalLink class="h-3 w-3" aria-hidden="true" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon="speaking"
+            title="No scheduled appearances listed yet"
+            description="Upcoming conference sessions, slides, and recorded talks will be published here once confirmed."
+            actionLabel="View talk proposals below"
+            actionHref="#topics-heading"
+          />
+        )
+      }
+    </section>
+
+    <!-- Topic Proposals -->
+    <section
+      aria-labelledby="topics-heading"
+      class="mt-16 border-t border-[var(--border-color)] pt-14"
+    >
+      <SectionHeading
+        id="topics-heading"
+        eyebrow="Available Topics"
+        title="Talk Proposals"
+        description="Representative engineering topics available for upcoming conferences, podcasts, and team sessions."
+      />
+
+      <div class="grid gap-6 md:grid-cols-3">
+        {
+          speakingTopicProposals.map((proposal) => (
+            <div class="editorial-card flex flex-col justify-between p-6">
+              <div>
+                <Badge variant="subtle">{proposal.audience}</Badge>
+                <h3 class="mt-3 text-lg font-semibold leading-snug text-[var(--text-primary)]">
+                  {proposal.title}
+                </h3>
+                <p class="mt-2.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+                  {proposal.description}
+                </p>
+              </div>
+              <ul class="mt-5 flex flex-wrap gap-1.5 border-t border-[var(--border-color)] pt-4">
+                {proposal.tags.map((tag) => (
+                  <li class="rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 py-0.5 font-mono text-xs text-[var(--text-secondary)]">
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  </Container>
+</BaseLayout>

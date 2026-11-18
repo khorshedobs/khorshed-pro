@@ -1,0 +1,103 @@
+---
+import { ExternalLink, FlaskConical, FolderCode } from '@lucide/astro';
+
+interface Props {
+  repositoryURL?: string;
+  examplePath?: string;
+  testsPath?: string;
+}
+
+const { repositoryURL, examplePath, testsPath } = Astro.props;
+
+function isSafeExternalUrl(raw: string | undefined): raw is string {
+  if (!raw) return false;
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+const validRepoUrl = isSafeExternalUrl(repositoryURL) ? repositoryURL : undefined;
+const cleanExamplePath = examplePath?.replace(/^\/+/, '');
+const cleanTestsPath = testsPath?.replace(/^\/+/, '');
+const hasAnySourceInfo = Boolean(validRepoUrl || cleanExamplePath || cleanTestsPath);
+
+function buildRepoSubpath(base: string, subpath: string): string {
+  const trimmedBase = base.replace(/\/+$/, '');
+  if (trimmedBase.includes('github.com')) {
+    return `${trimmedBase}/tree/main/${subpath}`;
+  }
+  return trimmedBase;
+}
+---
+
+{
+  hasAnySourceInfo && (
+    <section
+      aria-label="Example source code and tests"
+      class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5"
+    >
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+            Verified Source Examples
+          </p>
+          <div class="mt-2 space-y-1 text-xs text-[var(--text-secondary)]">
+            {cleanExamplePath && (
+              <p class="flex items-center gap-2 font-mono">
+                <FolderCode class="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+                <span>Example: {cleanExamplePath}</span>
+              </p>
+            )}
+            {cleanTestsPath && (
+              <p class="flex items-center gap-2 font-mono">
+                <FlaskConical class="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+                <span>Tests: {cleanTestsPath}</span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {validRepoUrl && (
+          <div class="flex flex-wrap items-center gap-2.5">
+            <a
+              href={validRepoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)]"
+            >
+              <span>View source on GitHub</span>
+              <ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+
+            {cleanExamplePath && (
+              <a
+                href={buildRepoSubpath(validRepoUrl, cleanExamplePath)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+              >
+                <span>Explore complete example</span>
+                <ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            )}
+
+            {cleanTestsPath && (
+              <a
+                href={buildRepoSubpath(validRepoUrl, cleanTestsPath)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+              >
+                <span>View tests</span>
+                <ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}

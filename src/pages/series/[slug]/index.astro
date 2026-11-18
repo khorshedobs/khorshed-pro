@@ -1,0 +1,259 @@
+---
+import { ArrowLeft, ArrowRight, BookOpen, Calendar, Clock, Layers } from '@lucide/astro';
+import {
+  getAllSeries,
+  getArticlesForSeries,
+  getPublishedArticles,
+  groupSeriesArticlesByPhpVersion,
+  type SeriesEntry,
+} from '@/lib/content';
+import { formatDate, formatIsoDate } from '@/lib/date';
+import { getReadingTime } from '@/lib/reading-time';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+import Badge from '@/components/ui/Badge.astro';
+import EmptyState from '@/components/ui/EmptyState.astro';
+import PhpVersionTimeline from '@/components/series/PhpVersionTimeline.astro';
+
+export async function getStaticPaths() {
+  const allSeries = await getAllSeries();
+  return allSeries.map((series) => ({
+    params: { slug: series.id },
+    props: { series },
+  }));
+}
+
+interface Props {
+  series: SeriesEntry;
+}
+
+const { series } = Astro.props;
+const allArticles = await getPublishedArticles();
+const seriesArticles = getArticlesForSeries(allArticles, series.id);
+const versionGroups = groupSeriesArticlesByPhpVersion(seriesArticles);
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Series', href: '/series/' },
+  { label: series.data.title },
+];
+---
+
+<BaseLayout
+  title={series.data.title}
+  description={series.data.description}
+  breadcrumbs={breadcrumbs}
+>
+  <Container class="py-12 sm:py-16">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <!-- Series Hero -->
+    <header class="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-7 sm:p-10">
+      <div class="mb-5 flex flex-wrap items-center gap-2.5">
+        <Badge variant={series.data.status === 'Active' ? 'accent' : 'subtle'}>
+          {series.data.status} Series
+        </Badge>
+        {
+          series.data.phpVersionRange && (
+            <Badge variant="default">PHP {series.data.phpVersionRange}</Badge>
+          )
+        }
+        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
+          <BookOpen class="h-3.5 w-3.5 text-[var(--accent)]" aria-hidden="true" />
+          <span>
+            {seriesArticles.length}{' '}
+            {seriesArticles.length === 1 ? 'published article' : 'published articles'}
+          </span>
+        </span>
+      </div>
+
+      <div class="flex items-start gap-3.5">
+        <div
+          class="mt-1 hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--accent)] sm:flex"
+        >
+          <Layers class="h-5 w-5" aria-hidden="true" />
+        </div>
+        <div>
+          <h1 class="heading-page">{series.data.title}</h1>
+          <p class="mt-2.5 text-base font-medium text-[var(--accent)] sm:text-lg">
+            {series.data.subtitle}
+          </p>
+        </div>
+      </div>
+
+      <p class="mt-5 max-w-3xl text-base leading-relaxed text-[var(--text-secondary)] sm:text-lg">
+        {series.data.description}
+      </p>
+
+      {
+        series.data.topics.length > 0 && (
+          <ul class="mt-6 flex flex-wrap gap-2" aria-label="Series focus areas">
+            {series.data.topics.map((topic) => (
+              <li class="rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
+                {topic}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      {
+        series.data.phpVersionRange && (
+          <div class="mt-8 border-t border-[var(--border-color)] pt-7">
+            <div class="mb-3.5 flex flex-wrap items-center justify-between gap-2">
+              <p class="text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+                PHP Version Timeline
+              </p>
+              <p class="text-xs text-[var(--text-secondary)]">
+                Select any published version below to jump to its chapters
+              </p>
+            </div>
+            <PhpVersionTimeline
+              publishedArticles={seriesArticles}
+              seriesId={series.id}
+            />
+          </div>
+        )
+      }
+    </header>
+
+    <!-- Grouped Articles Curriculum -->
+    <section aria-labelledby="series-curriculum-heading" class="mt-14">
+      <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+            Structured Curriculum
+          </p>
+          <h2 id="series-curriculum-heading" class="heading-section mt-1">
+            {seriesArticles.length > 0 ? 'Published Chapters by Version' : 'Curriculum Roadmap'}
+          </h2>
+        </div>
+      </div>
+
+      {
+        seriesArticles.length === 0 ? (
+          <EmptyState
+            icon="articles"
+            title="Chapters in this series are planned"
+            description="No published articles are assigned to this series yet. Upcoming chapters will appear here once reviewed and published."
+            actionLabel="Browse published articles"
+            actionHref="/articles/"
+          />
+        ) : (
+          <div class="space-y-10">
+            {versionGroups.map((group) => {
+              const anchorId = `php-${group.version.replace('.', '-')}`;
+              return (
+                <section
+                  id={anchorId}
+                  aria-label={group.label}
+                  class="scroll-mt-24 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-8"
+                >
+                  <div class="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-color)] pb-4">
+                    <div class="flex items-center gap-3">
+                      <span class="inline-flex items-center rounded-lg border border-[var(--accent)]/35 bg-[var(--accent-subtle)] px-3 py-1 font-mono text-sm font-semibold text-[var(--accent)]">
+                        {group.label}
+                      </span>
+                      <span class="text-sm text-[var(--text-secondary)]">
+                        {group.articles.length}{' '}
+                        {group.articles.length === 1 ? 'chapter' : 'chapters'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ol class="space-y-4">
+                    {group.articles.map((article, idx) => {
+                      const readingTime = getReadingTime(article.body);
+                      const sequenceNumber = article.data.seriesOrder ?? idx + 1;
+                      return (
+                        <li>
+                          <article class="editorial-card group bg-[var(--bg-primary)] p-5 sm:p-6">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                              <div class="flex items-start gap-4">
+                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] font-mono text-sm font-bold text-[var(--accent)]">
+                                  {String(sequenceNumber).padStart(2, '0')}
+                                </span>
+
+                                <div>
+                                  <div class="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                                    {article.data.phpVersion && (
+                                      <span class="font-mono font-semibold text-[var(--accent)]">
+                                        PHP {article.data.phpVersion}
+                                      </span>
+                                    )}
+                                    {article.data.difficulty && (
+                                      <>
+                                        <span class="text-[var(--text-secondary)]/50" aria-hidden="true">
+                                          &middot;
+                                        </span>
+                                        <span class="text-[var(--text-secondary)]">
+                                          {article.data.difficulty}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  <h3 class="text-lg font-semibold tracking-tight text-[var(--text-primary)] sm:text-xl">
+                                    <a
+                                      href={`/articles/${article.id}/`}
+                                      class="transition-colors group-hover:text-[var(--accent)]"
+                                    >
+                                      {article.data.title}
+                                    </a>
+                                  </h3>
+
+                                  <p class="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+                                    {article.data.description}
+                                  </p>
+
+                                  <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
+                                    <span class="inline-flex items-center gap-1.5">
+                                      <Calendar class="h-3.5 w-3.5" aria-hidden="true" />
+                                      <time datetime={formatIsoDate(article.data.publishedAt)}>
+                                        {formatDate(article.data.publishedAt)}
+                                      </time>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5">
+                                      <Clock class="h-3.5 w-3.5" aria-hidden="true" />
+                                      <span>{readingTime.label}</span>
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <a
+                                href={`/articles/${article.id}/`}
+                                class="inline-flex shrink-0 items-center gap-1.5 self-start text-sm font-medium text-[var(--accent)] transition-colors group-hover:text-[var(--accent-hover)] sm:mt-1"
+                              >
+                                <span>Read chapter</span>
+                                <ArrowRight
+                                  class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                                  aria-hidden="true"
+                                />
+                              </a>
+                            </div>
+                          </article>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </section>
+              );
+            })}
+          </div>
+        )
+      }
+    </section>
+
+    <div class="mt-12 border-t border-[var(--border-color)] pt-6">
+      <a
+        href="/series/"
+        class="inline-flex items-center gap-2 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+      >
+        <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+        <span>All educational series</span>
+      </a>
+    </div>
+  </Container>
+</BaseLayout>

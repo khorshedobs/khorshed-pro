@@ -1,0 +1,112 @@
+---
+import {
+  BadgeCheck,
+  CircleExclamationPoint,
+  Cpu,
+  Gauge,
+  Info,
+  Lightbulb,
+  OctagonExclamationPoint,
+  ShieldExclamationPoint,
+} from '@lucide/astro';
+
+export type CalloutType =
+  | 'info'
+  | 'tip'
+  | 'warning'
+  | 'important'
+  | 'compatibility'
+  | 'performance'
+  | 'security'
+  | 'best-practice';
+
+interface Props {
+  type?: CalloutType;
+  title?: string;
+}
+
+const { type = 'info', title } = Astro.props;
+
+const variantConfig: Record<
+  CalloutType,
+  {
+    defaultTitle: string;
+    borderClass: string;
+    bgClass: string;
+    titleClass: string;
+  }
+> = {
+  info: {
+    defaultTitle: 'Note',
+    borderClass: 'border-sky-500/35 border-l-sky-500',
+    bgClass: 'bg-sky-500/5',
+    titleClass: 'text-sky-700 dark:text-sky-300',
+  },
+  tip: {
+    defaultTitle: 'Tip',
+    borderClass: 'border-emerald-500/35 border-l-emerald-500',
+    bgClass: 'bg-emerald-500/5',
+    titleClass: 'text-emerald-700 dark:text-emerald-300',
+  },
+  warning: {
+    defaultTitle: 'Warning',
+    borderClass: 'border-amber-500/40 border-l-amber-500',
+    bgClass: 'bg-amber-500/6',
+    titleClass: 'text-amber-700 dark:text-amber-300',
+  },
+  important: {
+    defaultTitle: 'Important',
+    borderClass: 'border-[var(--accent)]/45 border-l-[var(--accent)]',
+    bgClass: 'bg-[var(--accent-subtle)]',
+    titleClass: 'text-[var(--accent)]',
+  },
+  compatibility: {
+    defaultTitle: 'PHP Compatibility',
+    borderClass: 'border-[var(--accent)]/40 border-l-[var(--accent)]',
+    bgClass: 'bg-[var(--bg-surface)]',
+    titleClass: 'text-[var(--accent)]',
+  },
+  performance: {
+    defaultTitle: 'Performance',
+    borderClass: 'border-indigo-500/35 border-l-indigo-500',
+    bgClass: 'bg-indigo-500/5',
+    titleClass: 'text-indigo-700 dark:text-indigo-300',
+  },
+  security: {
+    defaultTitle: 'Security Consideration',
+    borderClass: 'border-rose-500/40 border-l-rose-500',
+    bgClass: 'bg-rose-500/6',
+    titleClass: 'text-rose-700 dark:text-rose-300',
+  },
+  'best-practice': {
+    defaultTitle: 'Best Practice',
+    borderClass: 'border-teal-500/35 border-l-teal-500',
+    bgClass: 'bg-teal-500/5',
+    titleClass: 'text-teal-700 dark:text-teal-300',
+  },
+};
+
+const style = variantConfig[type];
+const heading = title ?? style.defaultTitle;
+---
+
+<aside
+  role="note"
+  data-callout={type}
+  class={`my-7 rounded-xl border border-l-4 px-5 py-4 ${style.borderClass} ${style.bgClass}`}
+>
+  <div class={`mb-2 flex items-center gap-2 text-xs font-semibold tracking-wider uppercase ${style.titleClass}`}>
+    {type === 'info' && <Info class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    {type === 'tip' && <Lightbulb class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    {type === 'warning' && <OctagonExclamationPoint class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    {type === 'important' && <CircleExclamationPoint class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    {type === 'compatibility' && <Cpu class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    {type === 'performance' && <Gauge class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    {type === 'security' && <ShieldExclamationPoint class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    {type === 'best-practice' && <BadgeCheck class="h-4 w-4 shrink-0" aria-hidden="true" />}
+    <span>{heading}</span>
+  </div>
+  <div class="text-sm leading-relaxed text-[var(--text-primary)] [&>p:last-child]:mb-0 [&>ul:last-child]:mb-0">
+    <slot />
+  </div>
+</aside>

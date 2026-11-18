@@ -1,0 +1,202 @@
+---
+import { ArrowLeft, ArrowRight } from '@lucide/astro';
+import type { MarkdownHeading } from 'astro';
+import { siteConfig } from '@/config/site';
+import type { ArticleEntry, SeriesEntry } from '@/lib/content';
+import BaseLayout from './BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import ArticleHeader from '@/components/article/ArticleHeader.astro';
+import ArticleTags from '@/components/article/ArticleTags.astro';
+import PhpCompatibility from '@/components/article/PhpCompatibility.astro';
+import SourceCodeLinks from '@/components/article/SourceCodeLinks.astro';
+import ReadingProgress from '@/components/article/ReadingProgress.astro';
+import TableOfContents from '@/components/article/TableOfContents.astro';
+import SeriesNavigation from '@/components/article/SeriesNavigation.astro';
+import ShareLinks from '@/components/article/ShareLinks.astro';
+import AuthorSignature from '@/components/article/AuthorSignature.astro';
+import RelatedArticles from '@/components/article/RelatedArticles.astro';
+import type { BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+
+interface Props {
+  article: ArticleEntry;
+  headings: MarkdownHeading[];
+  series?: SeriesEntry;
+  seriesArticles?: ArticleEntry[];
+  previousArticle?: ArticleEntry;
+  nextArticle?: ArticleEntry;
+  relatedArticles?: ArticleEntry[];
+}
+
+const {
+  article,
+  headings,
+  series,
+  seriesArticles = [],
+  previousArticle,
+  nextArticle,
+  relatedArticles = [],
+} = Astro.props;
+
+const canonicalUrl =
+  article.data.canonicalURL ??
+  new URL(`/articles/${article.id}/`, siteConfig.siteUrl).href;
+
+const shortArticleTitle =
+  article.data.title.split(':')[0]?.trim() || article.data.title;
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/', hideOnMobile: true },
+  { label: 'Articles', href: '/articles/' },
+];
+
+if (series) {
+  breadcrumbs.push({
+    label: series.data.title,
+    href: `/series/${series.id}/`,
+    hideOnMobile: true,
+  });
+}
+
+breadcrumbs.push({
+  label: article.data.title,
+  shortLabel: shortArticleTitle,
+});
+---
+
+<BaseLayout
+  title={article.data.title}
+  description={article.data.description}
+  canonicalURL={canonicalUrl}
+  image={article.data.coverImage}
+  type="article"
+  breadcrumbs={breadcrumbs}
+  article={{
+    title: article.data.title,
+    description: article.data.description,
+    publishedAt: article.data.publishedAt,
+    updatedAt: article.data.updatedAt,
+    author: article.data.author,
+    tags: article.data.tags,
+    category: article.data.category,
+    image: article.data.coverImage,
+  }}
+>
+  <ReadingProgress targetId="article-content-body" />
+
+  <Container class="py-10 sm:py-14">
+    <article>
+      <ArticleHeader
+        article={article}
+        series={series}
+        breadcrumbs={breadcrumbs}
+      />
+
+      <PhpCompatibility
+        phpVersion={article.data.phpVersion}
+        minimumPhpVersion={article.data.minimumPhpVersion}
+        testedPhpVersions={article.data.testedPhpVersions}
+        requiredExtensions={article.data.requiredExtensions}
+        deprecatedIn={article.data.deprecatedIn}
+        removedIn={article.data.removedIn}
+      />
+
+      <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-14">
+        <div class="min-w-0">
+          <TableOfContents headings={headings} variant="mobile" />
+
+          <div id="article-content-body" class="prose-content">
+            <slot />
+          </div>
+
+          <footer class="mt-12 space-y-8 border-t border-[var(--border-color)] pt-8">
+            <SourceCodeLinks
+              repositoryURL={article.data.repositoryURL}
+              examplePath={article.data.examplePath}
+              testsPath={article.data.testsPath}
+            />
+
+            {
+              article.data.tags.length > 0 && (
+                <div>
+                  <p class="mb-3 text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+                    Topics
+                  </p>
+                  <ArticleTags tags={article.data.tags} />
+                </div>
+              )
+            }
+
+            {
+              series && seriesArticles.length > 0 && (
+                <SeriesNavigation
+                  series={series}
+                  seriesArticles={seriesArticles}
+                  currentArticleId={article.id}
+                />
+              )
+            }
+
+            {
+              (previousArticle || nextArticle) && (
+                <nav
+                  aria-label="Article sequence navigation"
+                  class="grid gap-4 sm:grid-cols-2"
+                >
+                  {previousArticle ? (
+                    <a
+                      href={`/articles/${previousArticle.id}/`}
+                      class="editorial-card group p-4"
+                    >
+                      <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
+                        <ArrowLeft class="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>Previous article</span>
+                      </span>
+                      <p class="mt-1.5 text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent)]">
+                        {previousArticle.data.title}
+                      </p>
+                    </a>
+                  ) : (
+                    <div />
+                  )}
+
+                  {nextArticle && (
+                    <a
+                      href={`/articles/${nextArticle.id}/`}
+                      class="editorial-card group p-4 text-right"
+                    >
+                      <span class="inline-flex items-center justify-end gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
+                        <span>Next article</span>
+                        <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+                      </span>
+                      <p class="mt-1.5 text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent)]">
+                        {nextArticle.data.title}
+                      </p>
+                    </a>
+                  )}
+                </nav>
+              )
+            }
+
+            <ShareLinks title={article.data.title} url={canonicalUrl} />
+
+            <AuthorSignature compact={true} />
+          </footer>
+
+          <RelatedArticles articles={relatedArticles} />
+
+          <div class="mt-10 border-t border-[var(--border-color)] pt-6">
+            <a
+              href="/articles/"
+              class="inline-flex items-center gap-2 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+            >
+              <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+              <span>Back to all articles</span>
+            </a>
+          </div>
+        </div>
+
+        <TableOfContents headings={headings} variant="sidebar" />
+      </div>
+    </article>
+  </Container>
+</BaseLayout>

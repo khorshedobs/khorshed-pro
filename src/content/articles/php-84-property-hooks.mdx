@@ -1,0 +1,287 @@
+---
+title: "PHP 8.4 Property Hooks: Computed and Validated State Without Boilerplate"
+description: "Exploring PHP 8.4 property hooks, virtual vs. backed properties, interface property contracts, readonly limitations, and pairing hooks with asymmetric visibility."
+publishedAt: 2026-11-18
+draft: false
+status: "published"
+featured: true
+category: "PHP"
+tags:
+  - "php"
+  - "php-8.4"
+  - "object-oriented-php"
+  - "modern-php"
+series: "modern-php-mastery"
+seriesOrder: 1
+phpVersion: "8.4"
+minimumPhpVersion: "8.4"
+testedPhpVersions:
+  - "8.4.27"
+  - "8.5.12"
+requiredExtensions: []
+difficulty: "Intermediate"
+author: "Khorshed Alam"
+repositoryURL: "https://github.com/khorshedobs/khorshed-pro"
+examplePath: "examples/php-8-4/property-hooks/"
+testsPath: "examples/php-8-4/property-hooks/tests/PropertyHooksTest.php"
+relatedArticles:
+  - "php-85-pipe-operator"
+isSampleContent: false
+---
+import CodeComparison from '@/components/article/CodeComparison.astro';
+import Callout from '@/components/article/Callout.astro';
+
+export const legacyEmailClass = `<?php
+
+declare(strict_types=1);
+
+final class UserBefore
+{
+    private string $email;
+
+    public function __construct(string $email)
+    {
+        $this->setEmail($email);
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): void
+    {
+        $normalized = strtolower(trim($email));
+
+        if (!filter_var($normalized, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException(
+                'A valid email address is required.'
+            );
+        }
+
+        $this->email = $normalized;
+    }
+}`;
+
+export const hookedEmailClass = `<?php
+
+declare(strict_types=1);
+
+final class UserProfile
+{
+    public string $email {
+        set (string $value) {
+            $normalized = strtolower(trim($value));
+
+            if (!filter_var($normalized, FILTER_VALIDATE_EMAIL)) {
+                throw new InvalidArgumentException(
+                    'A valid email address is required.'
+                );
+            }
+
+            $this->email = $normalized;
+        }
+    }
+
+    public function __construct(string $email)
+    {
+        $this->email = $email;
+    }
+}`;
+
+For years, PHP developers faced an awkward trade-off when designing classes and data objects. Public properties were ergonomic to read and write, yet offered no interception point when validation or normalization became necessary. Switching to `get*()` and `set*()` methods forced callers to change every call site or required verbose magic `__get` / `__set` implementations that sacrificed static analysis clarity.
+
+PHP 8.4 addresses this tension directly with **property hooks**, allowing a property itself to define `get` and `set` behavior directly inside its declaration.
+
+<Callout type="compatibility" title="PHP 8.4 Language Feature">
+  Property hooks require **PHP 8.4 or later**. All examples in this guide were syntax-checked and executed against **PHP 8.4.27** and **PHP 8.5.12** with no extra PHP extensions required.
+</Callout>
+
+## Before and After: Accessors vs. Property Hooks
+
+Before PHP 8.4, preserving an invariant such as normalizing and validating an email address required making the property `private` and exposing explicit `getEmail()` and `setEmail()` methods. With property hooks, callers keep natural property syntax (`$user->email`) while the class retains full control over reads and writes.
+
+<CodeComparison
+  title="Traditional Accessors vs. PHP 8.4 Property Hooks"
+  description="Compare private fields paired with getter/setter methods against an inline set hook."
+  summary="Property hooks preserve direct property syntax without giving up normalization or invariant checks—and let you introduce validation later without breaking callers."
+  before={{
+    label: "Before",
+    version: "PHP 8.3",
+    language: "php",
+    file: "src/UserBefore.php",
+    showLineNumbers: true,
+    code: legacyEmailClass,
+  }}
+  after={{
+    label: "After",
+    version: "PHP 8.4",
+    language: "php",
+    file: "src/UserProfile.php",
+    showLineNumbers: true,
+    highlightLines: [7, 8, 9, 17],
+    code: hookedEmailClass,
+  }}
+/>
+
+## Backed vs. Virtual Properties
+
+Property hooks come in two distinct forms depending on whether the property stores an underlying value in memory:
+
+- **Backed properties** store a value and reference `$this->propertyName` inside at least one hook.
+- **Virtual properties** compute their value dynamically (or delegate writes elsewhere) without allocating backing storage.
+
+```php title="examples/php-8-4/property-hooks/src/UserProfile.php" php="8.4" showLineNumbers highlight={27-29} caption="Backed properties store normalized inputs on $this, while $fullName computes its value dynamically as a virtual property."
+<?php
+
+declare(strict_types=1);
+
+final class UserProfile
+{
+    public string $email {
+        set (string $value) {
+            $normalized = strtolower(trim($value));
+
+            if (!filter_var($normalized, FILTER_VALIDATE_EMAIL)) {
+                throw new InvalidArgumentException('A valid email address is required.');
+            }
+
+            $this->email = $normalized;
+        }
+    }
+
+    public string $firstName {
+        set => trim($value);
+    }
+
+    public string $lastName {
+        set => trim($value);
+    }
+
+    // Virtual property: no backing storage is allocated for $fullName
+    public string $fullName {
+        get => trim($this->firstName . ' ' . $this->lastName);
+    }
+
+    public function __construct(
+        string $email,
+        string $firstName,
+        string $lastName,
+    ) {
+        $this->email = $email;
+        $this->firstName = $firstName;
+        $this->lastName = $lastName;
+    }
+}
+```
+
+In this example:
+
+1. Assigning `$profile->email = '  Dev@Example.com '` runs the `set` hook, normalizes the string, validates it, and stores it in `$this->email`.
+2. Using the arrow syntax `set => trim($value);` automatically assigns the expression result back to `$this->firstName` and `$this->lastName` because it is a shorthand `set` hook on a backed property.
+3. Reading `$profile->fullName` computes the display string on demand without needing a separate `getFullName()` method or keeping derived state synchronized.
+
+## Property Declarations in Interfaces
+
+Before PHP 8.4, interfaces could require methods, not properties. With property hooks, interfaces can specify property contracts with explicit `get` and/or `set` requirements:
+
+```php title="examples/php-8-4/property-hooks/src/NamedResource.php" php="8.4" showLineNumbers highlight={5-8,18-20} caption="Interfaces can require readable or writable property contracts without forcing specific backing implementations."
+<?php
+
+declare(strict_types=1);
+
+interface NamedResource
+{
+    public string $displayName { get; }
+}
+
+final class PackageMetadata implements NamedResource
+{
+    public function __construct(
+        public readonly string $vendor,
+        public readonly string $package,
+    ) {}
+
+    public string $displayName {
+        get => "{$this->vendor}/{$this->package}";
+    }
+}
+```
+
+Because `NamedResource` only requires `{ get; }`, an implementing class may fulfill the requirement using either a plain readable property or a computed virtual property hook.
+
+<Callout type="warning" title="Hooked Properties Cannot Be Readonly">
+  In PHP 8.4, the `readonly` modifier cannot be combined with property hooks—including classes marked `final readonly class`. When a class contains a hooked property like `$displayName`, mark only the individual constructor fields `readonly` instead of the entire class.
+</Callout>
+
+## Pairing Property Hooks with Asymmetric Visibility
+
+PHP 8.4 also introduces **asymmetric visibility** (`public private(set)`), which pairs naturally with property hooks when a value should be readable anywhere while writes stay restricted to the owning class:
+
+```php title="examples/php-8-4/property-hooks/src/InvoiceLine.php" php="8.4" showLineNumbers caption="Combining public private(set) with a set hook enforces invariants on internal mutations while preventing arbitrary external writes."
+<?php
+
+declare(strict_types=1);
+
+final class InvoiceLine
+{
+    public private(set) int $quantity {
+        set (int $value) { // [!code highlight]
+            if ($value < 1) {
+                throw new InvalidArgumentException('Quantity must be at least 1.');
+            }
+
+            $this->quantity = $value;
+        }
+    }
+
+    public function __construct(int $quantity)
+    {
+        $this->quantity = $quantity;
+    }
+
+    public function increment(int $by = 1): void
+    {
+        $this->quantity += $by;
+    }
+}
+```
+
+Notice how migrating an existing field from a plain public property to an invariant-guarded asymmetric property requires a minimal diff:
+
+```php title="Upgrade diff on InvoiceLine::$quantity" php="8.4"
+final class InvoiceLine
+{
+    public int $quantity; // [!code --]
+    public private(set) int $quantity { // [!code ++]
+        set (int $value) { // [!code ++]
+            if ($value < 1) { // [!code ++]
+                throw new InvalidArgumentException('Quantity must be at least 1.'); // [!code ++]
+            } // [!code ++]
+            $this->quantity = $value; // [!code ++]
+        } // [!code ++]
+    } // [!code ++]
+}
+```
+
+Because internal mutations such as `$this->quantity += $by` still go through the `set` hook, invariants remain enforced even when external callers are restricted from assigning `$line->quantity` directly.
+
+## Practical Design Guidelines
+
+<Callout type="performance" title="Keep Get Hooks Cheap and Side-Effect Free">
+  Callers reading `$object->property` expect property access to be lightweight and predictable. Avoid database queries, network requests, or heavy computation inside a `get` hook.
+</Callout>
+
+<Callout type="tip" title="Normalize Inputs Inside Set Hooks">
+  Trimming whitespace, lowercasing email addresses, and enforcing numeric bounds belong naturally inside `set` hooks because assignment happens once and stays explicit.
+</Callout>
+
+<Callout type="best-practice" title="When Traditional Methods Remain Preferable">
+  Keep multi-field state transitions, operations that dispatch domain events, or actions performing I/O inside named methods (such as `renameUser()` or `applyDiscount()`). Explicit method names communicate side effects far better than property assignment.
+</Callout>
+
+## Official References
+
+- [PHP Manual: Property Hooks](https://www.php.net/manual/en/language.oop5.property-hooks.php)
+- [PHP RFC: Property Hooks](https://wiki.php.net/rfc/property-hooks)
+- [PHP RFC: Asymmetric Visibility v2](https://wiki.php.net/rfc/asymmetric-visibility-v2)

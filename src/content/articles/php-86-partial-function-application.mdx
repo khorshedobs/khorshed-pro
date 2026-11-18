@@ -1,0 +1,75 @@
+---
+title: "PHP 8.6 Partial Function Application: Concepts and Composition"
+description: "Initial sample article outlining partial function application concepts in PHP 8.6 and how fixed arguments bridge multi-parameter functions with pipe chains."
+publishedAt: 2026-11-18
+draft: true
+status: "draft"
+featured: false
+category: "PHP"
+tags:
+  - "php"
+  - "php-8.6"
+  - "functional-php"
+  - "modern-php"
+series: "modern-php-mastery"
+seriesOrder: 3
+phpVersion: "8.6"
+difficulty: "Advanced"
+author: "Khorshed Alam"
+relatedArticles:
+  - "php-84-property-hooks"
+  - "php-85-pipe-operator"
+isSampleContent: true
+---
+
+> **Sample Content Notice:** This article is initial sample content created for the launch foundation of **Modern PHP Mastery: 8.0 → 8.6**. Several language details for PHP 8.6 are intentionally marked with editorial TODOs below so syntax is verified directly against finalized PHP 8.6 RFCs and runtime builds before final publication.
+
+In the previous part of this series, we saw how PHP 8.5's pipe operator (`|>`) makes single-argument function chains read naturally from top to bottom. However, many built-in PHP functions take two or more parameters—and the data being transformed is not always the first parameter (`array_map`, `implode`, `str_replace`, `preg_replace`).
+
+Without partial function application, developers must wrap those calls in boilerplate closures (`static fn (string $s): string => ...`) solely to bind one or more arguments in advance.
+
+## What Partial Function Application Solves
+
+**Partial Function Application (PFA)** creates a new callable by fixing a subset of a function's arguments while leaving the remaining parameter positions open for later invocation.
+
+Conceptually, the goal is to turn a multi-argument function into a specialized single-argument (or smaller-arity) closure without manually writing a wrapper function every time.
+
+Consider the gap today in PHP 8.5 when using `|>` with functions that require configuration arguments:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+// Today in PHP 8.5, fixing arguments around |> requires wrapper closures:
+$slug = '  Modern PHP Mastery  '
+    |> trim(...)
+    |> strtolower(...)
+    |> (static fn (string $value): string => str_replace(' ', '-', $value));
+```
+
+With partial function application, that final step becomes a declarative expression of intent—binding `' '` and `'-'` up front and leaving a single open slot for the incoming `$value` from the pipe.
+
+## Conceptual Mechanics
+
+Regardless of final token details, partial function application centers on three engineering ideas:
+
+1. **Positional and variadic placeholders:** Distinguishing a single unbound argument slot from remaining variadic arguments.
+2. **Deferred execution:** Arguments already supplied at the call site are captured when the partial callable is constructed; execution only occurs once all required open slots are filled.
+3. **Type preservation:** Static analyzers and runtime type checks preserve parameter and return types from the underlying function or method signature.
+
+> **Editorial TODO — Verify Final PHP 8.6 PFA Syntax:** Confirm the exact placeholder tokens (e.g., `?` single-argument placeholder vs. `...` variadic placeholder), named-argument partial binding rules, and interaction with constructors or `__invoke` in the finalized PHP 8.6 release notes before publishing live code listings.
+
+## Why PFA Matters for Everyday PHP Engineering
+
+Beyond syntactic brevity inside pipe chains, partial function application improves everyday patterns:
+
+- **Array callbacks:** Passing configured predicates or mappers to `array_filter()` and `array_map()` without duplicating parameter types in closures.
+- **Validation and middleware pipelines:** Creating reusable single-argument validators from general-purpose utility functions.
+- **Clearer composition:** Keeping data-flow pipelines focused on *what* transformation runs rather than closure ceremony.
+
+## Editorial Checklist
+
+- [ ] **Editorial TODO:** Replace the PHP 8.5 comparison listing with tested, executable PHP 8.6 partial application examples once verified against a PHP 8.6 binary.
+- [ ] **Editorial TODO:** Document named-argument partial binding behavior and parameter evaluation order from the accepted PHP 8.6 RFC.
+- [ ] **Editorial TODO:** Add a practical repository example combining `|>`, first-class callables, and partial function application in a request sanitization pipeline.

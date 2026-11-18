@@ -1,0 +1,152 @@
+---
+title: "PHP 8.5 Pipe Operator: Readable Left-to-Right Data Transformations"
+description: "Introducing PHP 8.5's pipe operator (|>), how it composes with first-class callables, precedence rules, and where readability improves."
+publishedAt: 2026-11-18
+draft: false
+status: "published"
+featured: true
+category: "PHP"
+tags:
+  - "php"
+  - "php-8.5"
+  - "functional-php"
+  - "modern-php"
+series: "modern-php-mastery"
+seriesOrder: 2
+phpVersion: "8.5"
+minimumPhpVersion: "8.5"
+testedPhpVersions:
+  - "8.5.12"
+requiredExtensions: []
+difficulty: "Intermediate"
+author: "Khorshed Alam"
+repositoryURL: "https://github.com/khorshedobs/khorshed-pro"
+examplePath: "examples/php-8-5/pipe-operator/"
+testsPath: "examples/php-8-5/pipe-operator/tests/PipeOperatorTest.php"
+relatedArticles:
+  - "php-84-property-hooks"
+isSampleContent: false
+---
+import CodeComparison from '@/components/article/CodeComparison.astro';
+import Callout from '@/components/article/Callout.astro';
+
+export const nestedTagsCode = `<?php
+
+declare(strict_types=1);
+
+$rawTags = ' PHP, Laravel , php, WordPress , ';
+
+$nested = array_values(
+    array_unique(
+        array_filter(
+            array_map(
+                static fn (string $tag): string => strtolower(trim($tag)),
+                explode(',', $rawTags)
+            )
+        )
+    )
+);`;
+
+export const pipedTagsCode = `<?php
+
+declare(strict_types=1);
+
+$rawTags = ' PHP, Laravel , php, WordPress , ';
+
+$piped = explode(',', $rawTags)
+    |> (static fn (array $items): array => array_map(
+        static fn (string $tag): string => strtolower(trim($tag)),
+        $items
+    ))
+    |> array_filter(...)
+    |> array_unique(...)
+    |> array_values(...);`;
+
+Data transformation pipelines are common across backend PHP code—normalizing request payloads, sanitizing slugs, filtering collections, or formatting strings. Historically, PHP offered two imperfect styles for writing chained transformations when working with standalone functions:
+
+1. **Nested calls**, which must be read inside-out from right to left.
+2. **Temporary variables**, which add visual noise when each intermediate step has no meaningful domain name.
+
+PHP 8.5 introduces the **pipe operator (`|>`)**, enabling left-to-right function composition where the value on the left is passed as the single argument to the callable on the right.
+
+<Callout type="compatibility" title="PHP 8.5 Language Feature">
+  The pipe operator (`|>`) requires **PHP 8.5 or later**. All examples in this article were validated against **PHP 8.5.12** with no extra extensions required.
+</Callout>
+
+## Comparing Nested Calls and Pipe Chains
+
+Consider normalizing a comma-separated tag header into clean, unique, lowercase tokens:
+
+<CodeComparison
+  title="Nested Function Calls vs. PHP 8.5 Pipe Operator"
+  description="Compare inside-out nested standard library calls with top-to-bottom left-to-right composition."
+  summary="Both implementations produce the exact same array, while the piped pipeline reads in the exact sequence values are transformed."
+  before={{
+    label: "Before",
+    version: "PHP 8.4",
+    language: "php",
+    file: "src/NestedTags.php",
+    showLineNumbers: true,
+    code: nestedTagsCode,
+  }}
+  after={{
+    label: "After",
+    version: "PHP 8.5",
+    language: "php",
+    file: "src/PipedTags.php",
+    showLineNumbers: true,
+    highlightLines: [8, 12, 13, 14],
+    code: pipedTagsCode,
+  }}
+/>
+
+Notice how each step in the piped version mirrors the actual execution sequence:
+
+1. Split the raw string on commas.
+2. Trim and lowercase every entry.
+3. Remove empty values using `array_filter(...)`.
+4. Deduplicate with `array_unique(...)`.
+5. Re-index with `array_values(...)`.
+
+## Pairing `|>` with First-Class Callables
+
+Introduced in PHP 8.1, first-class callable syntax (`strlen(...)`, `trim(...)`) produces a `Closure` from any function or method. Together with `|>`, single-argument standard library functions compose cleanly without wrapper closures:
+
+```php title="examples/php-8-5/pipe-operator/src/Slugger.php" php="8.5" showLineNumbers highlight={8-11} caption="Chaining first-class callables and closures in a single left-to-right pipeline."
+<?php
+
+declare(strict_types=1);
+
+function normalizeSlug(string $title): string
+{
+    return $title
+        |> trim(...)
+        |> strtolower(...)
+        |> (static fn (string $value): string => preg_replace('/[^a-z0-9]+/', '-', $value) ?? '')
+        |> (static fn (string $value): string => trim($value, '-'));
+}
+```
+
+## Precedence and Execution Semantics
+
+When writing piped expressions in PHP 8.5, keep three evaluation rules in mind:
+
+- **Left-associative flow:** A chain `$a |> $f1 |> $f2` evaluates `$a` first, passes its result as the sole argument to `$f1`, and passes that return value to `$f2`.
+- **Single-argument callable requirement:** The right-hand operand must evaluate to a callable expecting one value (or accept the piped value as its first parameter when remaining parameters are optional). Callables requiring by-reference parameters are not compatible with arbitrary piped r-values.
+- **Parenthesize arrow functions and closures:** Wrapping inline closures and `fn (...) => ...` expressions in parentheses prevents operator-precedence surprises when chaining subsequent `|>` steps.
+
+<Callout type="tip" title="Parenthesize Arrow Functions Inside Pipe Chains">
+  Because `fn (...) => ...` has looser precedence boundaries around subsequent operators, always wrap inline arrow functions in parentheses—`(fn (string $v) => ...)`—before piping into the next step.
+</Callout>
+
+## When Not to Use Pipes
+
+Pipes shine for linear transformations on values, strings, arrays, and DTOs. Avoid forcing `|>` into code that:
+
+- Requires branching control flow mid-pipeline (a readable `if` block or `match` expression is clearer).
+- Performs non-linear side effects or database transactions where explicit intermediate state aids debugging.
+- Already uses a clean fluent object builder where method chaining provides better domain naming.
+
+## Official References
+
+- [PHP RFC: Pipe operator v3](https://wiki.php.net/rfc/pipe-operator-v3)

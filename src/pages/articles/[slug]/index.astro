@@ -1,0 +1,57 @@
+---
+import { render } from 'astro:content';
+import {
+  getAdjacentArticles,
+  getArticlesForSeries,
+  getPublishedArticles,
+  getRelatedArticles,
+  getSeriesById,
+  type ArticleEntry,
+} from '@/lib/content';
+import ArticleLayout from '@/layouts/ArticleLayout.astro';
+
+export async function getStaticPaths() {
+  const articles = await getPublishedArticles();
+  return articles.map((article) => ({
+    params: { slug: article.id },
+    props: { article },
+  }));
+}
+
+interface Props {
+  article: ArticleEntry;
+}
+
+const { article } = Astro.props;
+const { Content, headings } = await render(article);
+
+const allArticles = await getPublishedArticles();
+const series = article.data.series
+  ? await getSeriesById(article.data.series)
+  : undefined;
+
+const seriesArticles = series
+  ? getArticlesForSeries(allArticles, series.id)
+  : [];
+
+const navigationPool =
+  seriesArticles.length > 1 ? seriesArticles : allArticles;
+const { previous: previousArticle, next: nextArticle } = getAdjacentArticles(
+  navigationPool,
+  article.id,
+);
+
+const relatedArticles = getRelatedArticles(allArticles, article, 2);
+---
+
+<ArticleLayout
+  article={article}
+  headings={headings}
+  series={series}
+  seriesArticles={seriesArticles}
+  previousArticle={previousArticle}
+  nextArticle={nextArticle}
+  relatedArticles={relatedArticles}
+>
+  <Content />
+</ArticleLayout>

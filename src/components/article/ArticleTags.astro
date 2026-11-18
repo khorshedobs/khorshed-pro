@@ -1,0 +1,24 @@
+---
+import { Hash } from '@lucide/astro';
+
+interface Props {
+  tags: string[];
+  limit?: number;
+}
+
+const { tags, limit } = Astro.props;
+const visibleTags = typeof limit === 'number' ? tags.slice(0, limit) : tags;
+---
+
+{
+  visibleTags.length > 0 && (
+    <ul class="flex flex-wrap items-center gap-1.5" aria-label="Article tags">
+      {visibleTags.map((tag) => (
+        <li class="inline-flex items-center gap-1 rounded-md border border-[var(--border-color)] bg-[var(--bg-surface)] px-2 py-0.5 font-mono text-xs text-[var(--text-secondary)]">
+          <Hash class="h-3 w-3 text-[var(--accent)]" aria-hidden="true" />
+          <span>{tag}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}

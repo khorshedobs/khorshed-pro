@@ -1,0 +1,94 @@
+---
+import { ArrowRight, BookOpen, Layers } from '@lucide/astro';
+import type { SeriesEntry } from '@/lib/content';
+import Badge from '@/components/ui/Badge.astro';
+
+interface Props {
+  series: SeriesEntry;
+  articleCount: number;
+  featuredVariant?: boolean;
+}
+
+const { series, articleCount, featuredVariant = false } = Astro.props;
+const seriesUrl = `/series/${series.id}/`;
+const statusVariant = series.data.status === 'Active' ? 'accent' : 'subtle';
+---
+
+<article
+  class={`editorial-card group flex h-full flex-col justify-between ${
+    featuredVariant ? 'p-7 sm:p-8' : 'p-6'
+  }`}
+>
+  <div>
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <Badge variant={statusVariant}>{series.data.status}</Badge>
+      {
+        series.data.phpVersionRange && (
+          <Badge variant="default">PHP {series.data.phpVersionRange}</Badge>
+        )
+      }
+      <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
+        <BookOpen class="h-3.5 w-3.5 text-[var(--accent)]" aria-hidden="true" />
+        <span>
+          {articleCount} {articleCount === 1 ? 'article' : 'articles'} published
+        </span>
+      </span>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <div
+        class="mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--accent)] sm:flex"
+      >
+        <Layers class="h-5 w-5" aria-hidden="true" />
+      </div>
+      <div>
+        <h3
+          class={`font-bold tracking-tight text-[var(--text-primary)] ${
+            featuredVariant ? 'text-xl sm:text-2xl' : 'text-lg'
+          }`}
+        >
+          <a
+            href={seriesUrl}
+            class="transition-colors group-hover:text-[var(--accent)]"
+          >
+            {series.data.title}
+          </a>
+        </h3>
+        <p class="mt-1 text-sm font-medium text-[var(--accent)]">
+          {series.data.subtitle}
+        </p>
+      </div>
+    </div>
+
+    <p class="mt-4 text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base">
+      {series.data.description}
+    </p>
+
+    {
+      series.data.topics.length > 0 && (
+        <ul class="mt-4 flex flex-wrap gap-1.5" aria-label="Series topics">
+          {series.data.topics.map((topic) => (
+            <li class="rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-0.5 text-xs text-[var(--text-secondary)]">
+              {topic}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+
+  <div class="mt-6 border-t border-[var(--border-color)] pt-4">
+    <a
+      href={seriesUrl}
+      class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
+    >
+      <span>
+        {articleCount > 0 ? 'Explore series' : 'View planned roadmap'}
+      </span>
+      <ArrowRight
+        class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+        aria-hidden="true"
+      />
+    </a>
+  </div>
+</article>

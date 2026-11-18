@@ -1,0 +1,227 @@
+---
+import '@/styles/global.css';
+import { siteConfig } from '@/config/site';
+import Header from '@/components/layout/Header.astro';
+import Footer from '@/components/layout/Footer.astro';
+import SEO, { type ArticleSeoMeta } from '@/components/layout/SEO.astro';
+import type { BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalURL?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  isHomepage?: boolean;
+  article?: ArticleSeoMeta;
+  breadcrumbs?: BreadcrumbItem[];
+}
+
+const props = Astro.props;
+---
+
+<!doctype html>
+<html lang={siteConfig.language}>
+  <head>
+    <SEO {...props} />
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        function applyTheme() {
+          var stored = null;
+          try {
+            stored = localStorage.getItem('theme');
+          } catch (e) {}
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme =
+            stored === 'dark' || stored === 'light'
+              ? stored
+              : prefersDark
+                ? 'dark'
+                : 'light';
+          root.classList.toggle('dark', theme === 'dark');
+          root.setAttribute('data-theme', theme);
+        }
+        applyTheme();
+        if (window.matchMedia) {
+          var mq = window.matchMedia('(prefers-color-scheme: dark)');
+          var listener = function () {
+            var stored = null;
+            try {
+              stored = localStorage.getItem('theme');
+            } catch (e) {}
+            if (!stored) {
+              applyTheme();
+            }
+          };
+          if (mq.addEventListener) {
+            mq.addEventListener('change', listener);
+          }
+        }
+        document.addEventListener('astro:after-swap', applyTheme);
+      })();
+    </script>
+  </head>
+  <body class="flex min-h-screen flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-[var(--accent)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-lg"
+    >
+      Skip to main content
+    </a>
+
+    <Header />
+
+    <main id="main-content" tabindex="-1" class="flex-1 focus:outline-none">
+      <slot />
+    </main>
+
+    <Footer />
+
+    <script>
+      async function copyPlainText(text: string): Promise<boolean> {
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(text);
+            return true;
+          } catch {
+            // Fall through to execCommand fallback
+          }
+        }
+
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.left = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          return ok;
+        } catch {
+          return false;
+        }
+      }
+
+      function createCopyButton(): HTMLButtonElement {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'code-copy-btn';
+        button.setAttribute('data-copy-code', '');
+        button.setAttribute('aria-label', 'Copy code to clipboard');
+        button.innerHTML =
+          '<svg class="copy-icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>' +
+          '<svg class="check-icon hidden h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+          '<span class="copy-label">Copy</span>';
+        return button;
+      }
+
+      function bindCopyHandler(button: HTMLButtonElement, pre: HTMLElement) {
+        if (button.dataset.bound === 'true') return;
+        button.dataset.bound = 'true';
+
+        button.addEventListener('click', async () => {
+          const codeEl = pre.querySelector('code');
+          const rawText = codeEl ? (codeEl.textContent ?? '') : (pre.textContent ?? '');
+          const text = rawText.replace(/\n$/, '');
+
+          const copied = await copyPlainText(text);
+          const copyIcon = button.querySelector('.copy-icon');
+          const checkIcon = button.querySelector('.check-icon');
+          const label = button.querySelector('.copy-label');
+
+          if (copied) {
+            button.setAttribute('data-copied', 'true');
+            copyIcon?.classList.add('hidden');
+            checkIcon?.classList.remove('hidden');
+            if (label) label.textContent = 'Copied';
+          } else {
+            if (label) label.textContent = 'Failed';
+          }
+
+          window.setTimeout(() => {
+            button.removeAttribute('data-copied');
+            copyIcon?.classList.remove('hidden');
+            checkIcon?.classList.add('hidden');
+            if (label) label.textContent = 'Copy';
+          }, 2000);
+        });
+      }
+
+      function enhanceCodeBlocks() {
+        const preBlocks = document.querySelectorAll<HTMLElement>('pre.astro-code');
+
+        preBlocks.forEach((pre) => {
+          if (pre.closest('[data-no-code-enhance]')) return;
+          const existingWrapper = pre.closest('.code-block-wrapper');
+          if (existingWrapper) {
+            const btn = existingWrapper.querySelector<HTMLButtonElement>('[data-copy-code]');
+            if (btn) bindCopyHandler(btn, pre);
+            return;
+          }
+
+          const wrapper = document.createElement('figure');
+          wrapper.className = 'code-block-wrapper';
+          wrapper.setAttribute('data-code-block', '');
+
+          const header = document.createElement('div');
+          header.className = 'code-block-header';
+
+          const meta = document.createElement('div');
+          meta.className = 'code-block-meta';
+
+          const lang = pre.getAttribute('data-language') || 'text';
+          const title = pre.getAttribute('data-title');
+          const phpVersion = pre.getAttribute('data-php-version');
+          const caption = pre.getAttribute('data-caption');
+
+          const langSpan = document.createElement('span');
+          langSpan.className = 'code-block-lang';
+          langSpan.textContent = lang;
+          meta.appendChild(langSpan);
+
+          if (phpVersion) {
+            const versionSpan = document.createElement('span');
+            versionSpan.className = 'code-block-version';
+            versionSpan.textContent = phpVersion.toLowerCase().startsWith('php')
+              ? phpVersion
+              : `PHP ${phpVersion}`;
+            meta.appendChild(versionSpan);
+          }
+
+          if (title) {
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'code-block-filename';
+            titleSpan.textContent = title;
+            meta.appendChild(titleSpan);
+          }
+
+          const copyBtn = createCopyButton();
+          bindCopyHandler(copyBtn, pre);
+
+          header.appendChild(meta);
+          header.appendChild(copyBtn);
+
+          pre.parentNode?.insertBefore(wrapper, pre);
+          wrapper.appendChild(header);
+          wrapper.appendChild(pre);
+
+          if (caption) {
+            const figcaption = document.createElement('figcaption');
+            figcaption.className = 'code-block-caption';
+            figcaption.textContent = caption;
+            wrapper.appendChild(figcaption);
+          }
+        });
+      }
+
+      enhanceCodeBlocks();
+      document.addEventListener('astro:after-swap', enhanceCodeBlocks);
+    </script>
+  </body>
+</html>

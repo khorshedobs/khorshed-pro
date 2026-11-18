@@ -1,0 +1,91 @@
+---
+import {
+  getAllSeries,
+  getArticlesForSeries,
+  getPublishedArticles,
+} from '@/lib/content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+import SectionHeading from '@/components/ui/SectionHeading.astro';
+import SeriesCard from '@/components/series/SeriesCard.astro';
+
+const [allSeries, articles] = await Promise.all([
+  getAllSeries(),
+  getPublishedArticles(),
+]);
+
+const activeSeries = allSeries.filter((s) => s.data.status !== 'Planned');
+const plannedSeries = allSeries.filter((s) => s.data.status === 'Planned');
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Series' },
+];
+---
+
+<BaseLayout
+  title="Series"
+  description="Structured educational series on modern PHP, Laravel, WordPress engineering, performance, and application security."
+  breadcrumbs={breadcrumbs}
+>
+  <Container class="py-12 sm:py-16">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <header class="max-w-3xl border-b border-[var(--border-color)] pb-9">
+      <p class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+        Structured Learning Paths
+      </p>
+      <h1 class="heading-page mt-2">Educational Series</h1>
+      <p class="mt-4 text-base leading-relaxed text-[var(--text-secondary)] sm:text-lg">
+        Multi-part technical publications organized sequentially so concepts build logically from
+        language foundations to production engineering decisions.
+      </p>
+    </header>
+
+    {
+      activeSeries.length > 0 && (
+        <section aria-labelledby="active-series-heading" class="mt-12">
+          <SectionHeading
+            id="active-series-heading"
+            eyebrow="Now Publishing"
+            title="Active Series"
+          />
+          <div class="grid gap-6">
+            {activeSeries.map((series) => (
+              <SeriesCard
+                series={series}
+                articleCount={getArticlesForSeries(articles, series.id).length}
+                featuredVariant={true}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      plannedSeries.length > 0 && (
+        <section
+          aria-labelledby="planned-series-heading"
+          class="mt-16 border-t border-[var(--border-color)] pt-12"
+        >
+          <SectionHeading
+            id="planned-series-heading"
+            eyebrow="Upcoming Roadmap"
+            title="Planned Future Series"
+            description="Multi-part publications planned across Laravel, WordPress, runtime performance, and application security."
+          />
+          <div class="grid gap-6 md:grid-cols-2">
+            {plannedSeries.map((series) => (
+              <SeriesCard
+                series={series}
+                articleCount={getArticlesForSeries(articles, series.id).length}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </Container>
+</BaseLayout>

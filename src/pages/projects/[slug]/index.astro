@@ -1,0 +1,203 @@
+---
+import { render } from 'astro:content';
+import { ArrowLeft, CircleCheck, ExternalLink } from '@lucide/astro';
+import { getAllProjects, type ProjectEntry } from '@/lib/content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+import Badge from '@/components/ui/Badge.astro';
+import Button from '@/components/ui/Button.astro';
+import SocialIcon from '@/components/ui/SocialIcon.astro';
+
+export async function getStaticPaths() {
+  const projects = await getAllProjects();
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: ProjectEntry;
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const statusLabel = project.data.isSample
+  ? 'Architecture Blueprint'
+  : project.data.status;
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Projects', href: '/projects/' },
+  { label: project.data.title },
+];
+---
+
+<BaseLayout
+  title={project.data.title}
+  description={project.data.summary}
+  image={project.data.coverImage}
+  breadcrumbs={breadcrumbs}
+>
+  <Container class="py-12 sm:py-16">
+    <Breadcrumbs items={breadcrumbs} />
+
+    <article>
+      <header class="border-b border-[var(--border-color)] pb-9">
+        <div class="mb-4 flex flex-wrap items-center gap-2.5">
+          <Badge variant="accent">{project.data.projectType}</Badge>
+          <Badge variant={project.data.isSample ? 'subtle' : 'default'}>
+            {statusLabel}
+          </Badge>
+          {
+            project.data.year && (
+              <Badge variant="subtle">{project.data.year}</Badge>
+            )
+          }
+        </div>
+
+        <h1 class="heading-page">{project.data.title}</h1>
+
+        <p class="mt-4 max-w-3xl text-lg leading-relaxed text-[var(--text-secondary)]">
+          {project.data.description}
+        </p>
+
+        {
+          (project.data.githubUrl || project.data.demoUrl) && (
+            <div class="mt-6 flex flex-wrap gap-3">
+              {project.data.githubUrl && (
+                <Button href={project.data.githubUrl} variant="secondary" external={true}>
+                  <SocialIcon network="github" class="h-4 w-4" />
+                  <span>View on GitHub</span>
+                </Button>
+              )}
+              {project.data.demoUrl && (
+                <Button href={project.data.demoUrl} variant="primary" external={true}>
+                  <span>Live Demo</span>
+                  <ExternalLink class="h-4 w-4" aria-hidden="true" />
+                </Button>
+              )}
+            </div>
+          )
+        }
+      </header>
+
+      {
+        project.data.coverImage && (
+          <figure class="mt-8 overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)]">
+            <img
+              src={project.data.coverImage}
+              alt={`Screenshot of ${project.data.title}`}
+              class="h-auto w-full object-cover"
+              loading="eager"
+            />
+          </figure>
+        )
+      }
+
+      <!-- Technical Stack & Overview Grid -->
+      <div class="mt-10 grid gap-8 lg:grid-cols-12">
+        <div class="space-y-8 lg:col-span-8">
+          <section class="grid gap-6 sm:grid-cols-2">
+            <div class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6">
+              <h2 class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+                Problem
+              </h2>
+              <p class="mt-2.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+                {project.data.problem}
+              </p>
+            </div>
+
+            <div class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6">
+              <h2 class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+                Solution
+              </h2>
+              <p class="mt-2.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+                {project.data.solution}
+              </p>
+            </div>
+          </section>
+
+          <section class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6">
+            <h2 class="text-lg font-semibold text-[var(--text-primary)]">
+              Key Features
+            </h2>
+            <ul class="mt-4 space-y-2.5">
+              {
+                project.data.keyFeatures.map((feature) => (
+                  <li class="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+                    <CircleCheck
+                      class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]"
+                      aria-hidden="true"
+                    />
+                    <span>{feature}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </section>
+
+          <section class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6">
+            <h2 class="text-lg font-semibold text-[var(--text-primary)]">
+              Technical Decisions
+            </h2>
+            <ul class="mt-4 list-disc space-y-2.5 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
+              {
+                project.data.technicalDecisions.map((decision) => (
+                  <li>{decision}</li>
+                ))
+              }
+            </ul>
+          </section>
+
+          <div class="prose-content pt-2">
+            <Content />
+          </div>
+        </div>
+
+        <aside class="lg:col-span-4">
+          <div class="sticky top-24 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6">
+            <h2 class="text-xs font-semibold tracking-wider text-[var(--text-primary)] uppercase">
+              Technical Stack
+            </h2>
+            <ul class="mt-4 flex flex-wrap gap-2">
+              {
+                project.data.technologies.map((tech) => (
+                  <li class="rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1 font-mono text-xs text-[var(--text-primary)]">
+                    {tech}
+                  </li>
+                ))
+              }
+            </ul>
+
+            <dl class="mt-6 space-y-2 border-t border-[var(--border-color)] pt-5 text-xs">
+              <div class="flex items-center justify-between">
+                <dt class="text-[var(--text-secondary)]">Category</dt>
+                <dd class="font-medium text-[var(--text-primary)]">
+                  {project.data.projectType}
+                </dd>
+              </div>
+              <div class="flex items-center justify-between">
+                <dt class="text-[var(--text-secondary)]">Status</dt>
+                <dd class="font-medium text-[var(--text-primary)]">
+                  {statusLabel}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+      </div>
+
+      <div class="mt-12 border-t border-[var(--border-color)] pt-6">
+        <a
+          href="/projects/"
+          class="inline-flex items-center gap-2 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+        >
+          <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+          <span>Back to all projects</span>
+        </a>
+      </div>
+    </article>
+  </Container>
+</BaseLayout>

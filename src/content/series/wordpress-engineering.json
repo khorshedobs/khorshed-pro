@@ -1,0 +1,14 @@
+{
+  "title": "WordPress Engineering",
+  "subtitle": "Modern PHP Patterns Inside the WordPress Ecosystem",
+  "description": "Upcoming series focused on plugin architecture, WooCommerce extensibility, data modeling, hooks discipline, and reliable WordPress engineering.",
+  "status": "Planned",
+  "featured": false,
+  "order": 3,
+  "topics": [
+    "Plugin Architecture",
+    "WooCommerce Extensions",
+    "Hooks & Boundaries",
+    "Automated Testing"
+  ]
+}

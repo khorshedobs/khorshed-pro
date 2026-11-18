@@ -1,0 +1,14 @@
+{
+  "title": "Laravel Deep Dive",
+  "subtitle": "Application Architecture Beyond Framework Defaults",
+  "description": "Upcoming series examining service boundaries, queue reliability, testing strategies, and long-term maintainability in Laravel codebases.",
+  "status": "Planned",
+  "featured": false,
+  "order": 2,
+  "topics": [
+    "Service Architecture",
+    "Queues & Idempotency",
+    "Testing with Pest",
+    "API Design"
+  ]
+}

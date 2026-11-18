@@ -1,0 +1,453 @@
+---
+import { ArrowRight, BookOpen, Layers, Terminal } from '@lucide/astro';
+import { Code } from 'astro:components';
+import { getConfiguredSocials, siteConfig } from '@/config/site';
+import {
+  getAllProjects,
+  getAllSeries,
+  getArticlesForSeries,
+  getPublishedArticles,
+} from '@/lib/content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import Button from '@/components/ui/Button.astro';
+import Badge from '@/components/ui/Badge.astro';
+import SectionHeading from '@/components/ui/SectionHeading.astro';
+import EmptyState from '@/components/ui/EmptyState.astro';
+import SocialIcon from '@/components/ui/SocialIcon.astro';
+import FeaturedArticleLead from '@/components/article/FeaturedArticleLead.astro';
+import ArticleRow from '@/components/article/ArticleRow.astro';
+import ProjectCard from '@/components/projects/ProjectCard.astro';
+import PhpVersionTimeline from '@/components/series/PhpVersionTimeline.astro';
+
+const [articles, allSeries, allProjects] = await Promise.all([
+  getPublishedArticles(),
+  getAllSeries(),
+  getAllProjects(),
+]);
+
+const flagshipSeries =
+  allSeries.find((s) => s.id === siteConfig.flagshipSeries.slug) ??
+  allSeries.find((s) => s.data.featured) ??
+  allSeries[0];
+
+const flagshipSeriesArticles = flagshipSeries
+  ? getArticlesForSeries(articles, flagshipSeries.id)
+  : [];
+
+const latestArticles = articles.slice(0, 6);
+const leadArticle = latestArticles[0];
+const remainingLatestArticles = latestArticles.slice(1);
+const leadCodeExcerpt = leadArticle?.id === 'php-85-pipe-operator'
+  ? `function normalizeSlug(string $title): string
+{
+    return $title
+        |> trim(...)
+        |> strtolower(...)
+        |> (fn (string $s) => preg_replace(
+            '/[^a-z0-9]+/',
+            '-',
+            $s,
+        ) ?? '')
+        |> (fn (string $s) => trim($s, '-'));
+}`
+  : undefined;
+
+const featuredProjects = allProjects.filter((p) => p.data.featured).slice(0, 3);
+const allProjectsAreBlueprints =
+  featuredProjects.length > 0 && featuredProjects.every((p) => p.data.isSample);
+const socials = getConfiguredSocials();
+
+const heroSnippet = `final class ArticleSlug
+{
+    public string $value {
+        set (string $raw) => $raw
+            |> trim(...)
+            |> strtolower(...)
+            |> (fn (string $s) => preg_replace(
+                '/[^a-z0-9]+/',
+                '-',
+                $s,
+            ) ?? '')
+            |> (fn (string $s) => trim($s, '-'));
+    }
+
+    public function __construct(string $raw)
+    {
+        $this->value = $raw;
+    }
+}`;
+---
+
+<BaseLayout isHomepage={true} description={siteConfig.defaultDescription}>
+  <!-- Section A: Hero -->
+  <section class="border-b border-[var(--border-color)] bg-[var(--bg-primary)]">
+    <Container class="py-16 sm:py-24 lg:py-28">
+      <div class="grid gap-12 lg:grid-cols-12 lg:items-center">
+        <div class="lg:col-span-7">
+          <p
+            class="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--bg-surface)] px-3.5 py-1 text-xs font-medium tracking-wide text-[var(--text-secondary)]"
+          >
+            <Terminal class="h-3.5 w-3.5 text-[var(--accent)]" aria-hidden="true" />
+            <span>{siteConfig.eyebrow}</span>
+          </p>
+
+          <h1 class="heading-hero mt-6">
+            {siteConfig.heroHeadlineLine1}
+            <br />
+            <span class="text-[var(--text-secondary)]">
+              {siteConfig.heroHeadlineLine2}
+            </span>
+          </h1>
+
+          <p
+            class="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)] sm:text-xl"
+          >
+            I&apos;m <strong class="font-semibold text-[var(--text-primary)]">{siteConfig.author.name}</strong>
+            —exploring modern PHP, Laravel, WordPress, and the engineering decisions behind
+            reliable software.
+          </p>
+
+          <div class="mt-9 flex flex-wrap items-center gap-3.5">
+            <Button href="/articles/" variant="primary">
+              <span>Explore Articles</span>
+              <ArrowRight class="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button href="/projects/" variant="secondary">
+              <span>View Projects</span>
+            </Button>
+
+            {
+              socials.length > 0 && (
+                <div
+                  class="flex items-center gap-2 pl-1"
+                  aria-label="Social profiles"
+                >
+                  {socials.map((profile) => (
+                    <a
+                      href={profile.href}
+                      aria-label={profile.label}
+                      title={profile.label}
+                      target={profile.key === 'email' ? undefined : '_blank'}
+                      rel={
+                        profile.key === 'email'
+                          ? undefined
+                          : 'noopener noreferrer'
+                      }
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+                    >
+                      <SocialIcon network={profile.key} class="h-4 w-4" />
+                    </a>
+                  ))}
+                </div>
+              )
+            }
+          </div>
+        </div>
+
+        <!-- Verified PHP 8.5 code motif combining 8.4 property hooks & 8.5 pipe operator -->
+        <div class="hidden lg:col-span-5 lg:block" aria-hidden="true" data-no-code-enhance>
+          <div class="overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--code-bg)] shadow-sm">
+            <div class="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--code-header-bg)] px-4 py-2.5 text-xs">
+              <span class="font-mono font-medium text-[var(--text-secondary)]">
+                src/Domain/ArticleSlug.php
+              </span>
+              <span class="rounded bg-[var(--accent-subtle)] px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--accent)]">
+                PHP 8.5
+              </span>
+            </div>
+            <div class="p-4 text-[12px] leading-relaxed [&_.astro-code]:m-0 [&_.astro-code]:overflow-x-auto [&_.astro-code]:font-mono">
+              <Code
+                code={heroSnippet}
+                lang="php"
+                themes={{ light: 'github-light', dark: 'github-dark' }}
+                defaultColor={false}
+              />
+            </div>
+            <div class="border-t border-[var(--border-color)] bg-[var(--code-header-bg)] px-4 py-2 font-mono text-[11px] text-[var(--text-secondary)]">
+              <span class="text-[var(--accent)]">&gt;</span>{' '}
+              (new ArticleSlug(&apos; PHP 8.5: Pipe Operator &apos;))-&gt;value &rarr; &quot;php-8-5-pipe-operator&quot;
+            </div>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Section B: Featured Publication -->
+  {
+    flagshipSeries && (
+      <section aria-labelledby="featured-series-heading" class="py-16 sm:py-22">
+        <Container>
+          <SectionHeading
+            id="featured-series-heading"
+            eyebrow="Flagship Publication"
+            title={flagshipSeries.data.title}
+            description={flagshipSeries.data.subtitle}
+            actionLabel="All series"
+            actionHref="/series/"
+          />
+
+          <div class="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 sm:p-9 lg:p-10">
+            <div class="grid gap-10 lg:grid-cols-12">
+              <div class="lg:col-span-7">
+                <div class="mb-5 flex flex-wrap items-center gap-2.5">
+                  <Badge variant="accent">{`${flagshipSeries.data.status} Series`}</Badge>
+                  {flagshipSeries.data.phpVersionRange && (
+                    <Badge variant="default">
+                      {`PHP ${flagshipSeries.data.phpVersionRange}`}
+                    </Badge>
+                  )}
+                  <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
+                    <BookOpen
+                      class="h-3.5 w-3.5 text-[var(--accent)]"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      {flagshipSeriesArticles.length}{' '}
+                      {flagshipSeriesArticles.length === 1
+                        ? 'article'
+                        : 'articles'}{' '}
+                      published
+                    </span>
+                  </span>
+                </div>
+
+                <p class="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)] sm:text-lg">
+                  {flagshipSeries.data.description}
+                </p>
+
+                {flagshipSeries.data.topics.length > 0 && (
+                  <ul
+                    class="mt-5 flex flex-wrap gap-2"
+                    aria-label="Language and engineering concepts"
+                  >
+                    {flagshipSeries.data.topics.map((topic) => (
+                      <li class="rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
+                        {topic}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div class="mt-7">
+                  <Button href={`/series/${flagshipSeries.id}/`} variant="primary">
+                    <Layers class="h-4 w-4" aria-hidden="true" />
+                    <span>Explore {flagshipSeries.data.title}</span>
+                  </Button>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] p-5 sm:p-6 lg:col-span-5">
+                <p class="mb-3 text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+                  Published Chapters
+                </p>
+                {flagshipSeriesArticles.length > 0 ? (
+                  <ol class="space-y-2.5">
+                    {flagshipSeriesArticles.slice(0, 4).map((item, idx) => (
+                      <li>
+                        <a
+                          href={`/articles/${item.id}/`}
+                          class="group flex items-start justify-between gap-3 rounded-lg p-2.5 transition-colors hover:bg-[var(--bg-surface)]"
+                        >
+                          <span class="flex items-start gap-2.5">
+                            <span class="mt-0.5 font-mono text-xs font-semibold text-[var(--accent)]">
+                              {String(item.data.seriesOrder ?? idx + 1).padStart(
+                                2,
+                                '0',
+                              )}
+                            </span>
+                            <span class="text-sm font-medium leading-snug text-[var(--text-primary)] group-hover:text-[var(--accent)]">
+                              {item.data.title}
+                            </span>
+                          </span>
+                          {item.data.phpVersion && (
+                            <span class="shrink-0 font-mono text-xs text-[var(--text-secondary)]">
+                              {item.data.phpVersion}
+                            </span>
+                          )}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p class="text-sm text-[var(--text-secondary)]">
+                    Chapters in this series are currently being prepared for publication.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <!-- PHP 8.0 -> 8.6 Progression -->
+            <div class="mt-9 border-t border-[var(--border-color)] pt-7">
+              <div class="mb-3.5 flex flex-wrap items-center justify-between gap-2">
+                <p class="text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+                  Version Roadmap (8.0 → 8.6)
+                </p>
+                <p class="text-xs text-[var(--text-secondary)]">
+                  Highlighted versions link directly to published chapters
+                </p>
+              </div>
+              <PhpVersionTimeline
+                publishedArticles={flagshipSeriesArticles}
+                seriesId={flagshipSeries.id}
+                compact={true}
+              />
+            </div>
+          </div>
+        </Container>
+      </section>
+    )
+  }
+
+  <!-- Section C: Latest Articles (Editorial Spotlight + Compact Rows) -->
+  <section
+    aria-labelledby="latest-articles-heading"
+    class="border-t border-[var(--border-color)] py-16 sm:py-22"
+  >
+    <Container>
+      <SectionHeading
+        id="latest-articles-heading"
+        eyebrow="Technical Writing"
+        title="Latest Articles"
+        description="Practical engineering notes across modern PHP, Laravel, WordPress, TypeScript, and software architecture."
+        actionLabel="Browse all articles"
+        actionHref="/articles/"
+      />
+
+      {
+        leadArticle ? (
+          <div class="space-y-8">
+            <FeaturedArticleLead
+              article={leadArticle}
+              codeExcerpt={leadCodeExcerpt}
+              codeTitle="src/Support/Slugger.php"
+            />
+
+            {remainingLatestArticles.length > 0 && (
+              <div class="divide-y divide-[var(--border-color)] border-y border-[var(--border-color)]">
+                {remainingLatestArticles.map((article) => (
+                  <ArticleRow article={article} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <EmptyState
+            title="New technical articles coming soon"
+            description="Published essays and language deep dives will appear here as soon as editorial review is complete."
+            icon="articles"
+            actionLabel="Explore Modern PHP Mastery"
+            actionHref="/series/modern-php-mastery/"
+          />
+        )
+      }
+    </Container>
+  </section>
+
+  <!-- Section D: Projects / Architecture Blueprints -->
+  <section
+    aria-labelledby="featured-projects-heading"
+    class="border-t border-[var(--border-color)] py-16 sm:py-22"
+  >
+    <Container>
+      <SectionHeading
+        id="featured-projects-heading"
+        eyebrow={allProjectsAreBlueprints ? 'Engineering Blueprints' : 'Engineering Portfolio'}
+        title={allProjectsAreBlueprints ? 'Selected Work & Blueprints' : 'Featured Projects'}
+        description={
+          allProjectsAreBlueprints
+            ? 'In-development architecture previews across open-source PHP, WordPress plugins, and Laravel middleware. Completed public releases will appear as they ship.'
+            : 'Selected software builds detailing architectural trade-offs, system constraints, and implementation notes.'
+        }
+        actionLabel="View all projects"
+        actionHref="/projects/"
+      />
+
+      {
+        featuredProjects.length > 0 ? (
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {featuredProjects.map((project) => (
+              <ProjectCard project={project} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="Selected work coming soon"
+            description="Open-source packages, plugins, and backend case studies will be published here."
+            icon="projects"
+          />
+        )
+      }
+    </Container>
+  </section>
+
+  <!-- Section E: Author Colophon / Personal Introduction -->
+  <section
+    aria-labelledby="about-preview-heading"
+    class="border-t border-[var(--border-color)] pt-16 sm:pt-22"
+  >
+    <Container>
+      <div class="grid gap-10 lg:grid-cols-12 lg:items-start">
+        <div class="lg:col-span-7">
+          <div class="flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              class="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--accent)]/35 bg-[var(--accent-subtle)] font-mono text-xs font-bold text-[var(--accent)]"
+            >
+              {siteConfig.monogram}
+            </span>
+            <div>
+              <p class="text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+                About the Author
+              </p>
+              <p class="text-sm font-medium text-[var(--text-primary)]">
+                {siteConfig.author.name}
+              </p>
+            </div>
+          </div>
+
+          <h2 id="about-preview-heading" class="heading-section mt-5">
+            Engineering clarity over accidental complexity
+          </h2>
+          <p class="mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-secondary)]">
+            {siteConfig.author.bioShort}
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button href="/about/" variant="secondary">
+              <span>About Khorshed Alam</span>
+              <ArrowRight class="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button href="/speaking/" variant="ghost">
+              <span>Speaking</span>
+            </Button>
+            <Button href="/contact/" variant="ghost">
+              <span>Contact</span>
+            </Button>
+          </div>
+        </div>
+
+        <aside class="border-l-2 border-[var(--accent)]/40 pl-6 lg:col-span-5">
+          <p class="text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+            Core Focus Areas
+          </p>
+          <ul class="mt-4 space-y-3 text-sm text-[var(--text-secondary)]">
+            <li class="flex items-baseline justify-between gap-4 border-b border-[var(--border-color)] pb-2.5">
+              <span class="font-medium text-[var(--text-primary)]">Modern PHP &amp; Laravel</span>
+              <span class="font-mono text-xs text-[var(--accent)]">8.0 → 8.5</span>
+            </li>
+            <li class="flex items-baseline justify-between gap-4 border-b border-[var(--border-color)] pb-2.5">
+              <span class="font-medium text-[var(--text-primary)]">WordPress &amp; WooCommerce</span>
+              <span class="font-mono text-xs text-[var(--text-secondary)]">Plugins &amp; APIs</span>
+            </li>
+            <li class="flex items-baseline justify-between gap-4">
+              <span class="font-medium text-[var(--text-primary)]">TypeScript &amp; Tooling</span>
+              <span class="font-mono text-xs text-[var(--text-secondary)]">Static Web</span>
+            </li>
+          </ul>
+        </aside>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

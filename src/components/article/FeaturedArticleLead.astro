@@ -1,0 +1,149 @@
+---
+import { ArrowRight } from '@lucide/astro';
+import { Code } from 'astro:components';
+import type { ArticleEntry } from '@/lib/content';
+import { formatDate, formatIsoDate } from '@/lib/date';
+import { getReadingTime } from '@/lib/reading-time';
+
+interface Props {
+  article: ArticleEntry;
+  codeExcerpt?: string;
+  codeTitle?: string;
+}
+
+const { article, codeExcerpt, codeTitle } = Astro.props;
+const readingTime = getReadingTime(article.body);
+const articleUrl = `/articles/${article.id}/`;
+
+interface ExtractedCodeBlock {
+  title?: string;
+  code: string;
+}
+
+function findCompactPhpBlock(body: string | undefined): ExtractedCodeBlock | null {
+  if (!body) return null;
+  const matches = [
+    ...body.matchAll(/```php(?:\s+title=["']([^"']+)["'])?\n([\s\S]*?)```/g),
+  ];
+
+  for (const m of matches) {
+    const cleaned = m[2]
+      .replace(/^<\?php\s*/m, '')
+      .replace(/^declare\(strict_types=1\);\s*/m, '')
+      .trim();
+    const lines = cleaned.split('\n');
+    const maxLineLength = Math.max(...lines.map((l) => l.length));
+    if (lines.length > 0 && lines.length <= 14 && maxLineLength <= 68) {
+      return {
+        title: m[1],
+        code: cleaned,
+      };
+    }
+  }
+  return null;
+}
+
+const extracted = !codeExcerpt ? findCompactPhpBlock(article.body) : null;
+const snippet = codeExcerpt?.trim() ?? extracted?.code ?? '';
+const snippetTitle = codeTitle ?? extracted?.title ?? 'Example.php';
+---
+
+<article class="group rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 transition-colors hover:border-[var(--accent)] sm:p-8">
+  <div class="grid gap-8 lg:grid-cols-12 lg:items-center">
+    <div class={snippet ? 'lg:col-span-7' : 'lg:col-span-12'}>
+      <div class="mb-3 flex flex-wrap items-center gap-2 text-xs">
+        <span class="rounded bg-[var(--accent-subtle)] px-2 py-0.5 font-semibold tracking-wider text-[var(--accent)] uppercase">
+          Latest Spotlight
+        </span>
+        <span class="font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+          {article.data.category}
+        </span>
+        {
+          article.data.phpVersion && (
+            <>
+              <span class="text-[var(--text-secondary)]/50" aria-hidden="true">
+                &middot;
+              </span>
+              <span class="font-mono font-medium text-[var(--text-primary)]">
+                PHP {article.data.phpVersion}
+              </span>
+            </>
+          )
+        }
+        {
+          article.data.difficulty && (
+            <>
+              <span class="text-[var(--text-secondary)]/50" aria-hidden="true">
+                &middot;
+              </span>
+              <span class="text-[var(--text-secondary)]">
+                {article.data.difficulty}
+              </span>
+            </>
+          )
+        }
+      </div>
+
+      <h3 class="text-xl font-bold leading-snug tracking-tight text-[var(--text-primary)] sm:text-2xl">
+        <a
+          href={articleUrl}
+          class="transition-colors group-hover:text-[var(--accent)]"
+        >
+          {article.data.title}
+        </a>
+      </h3>
+
+      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base">
+        {article.data.description}
+      </p>
+
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border-color)] pt-4">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
+          <time datetime={formatIsoDate(article.data.publishedAt)}>
+            {formatDate(article.data.publishedAt)}
+          </time>
+          <span aria-hidden="true">&middot;</span>
+          <span>{readingTime.label}</span>
+        </div>
+
+        <a
+          href={articleUrl}
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] transition-colors group-hover:text-[var(--accent-hover)]"
+        >
+          <span>Read article</span>
+          <ArrowRight
+            class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </a>
+      </div>
+    </div>
+
+    {
+      snippet && (
+        <div class="hidden lg:col-span-5 lg:block" aria-hidden="true" data-no-code-enhance>
+          <div class="overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--code-bg)]">
+            <div class="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--code-header-bg)] px-3.5 py-2 text-[11px]">
+              <span class="truncate font-mono text-[var(--text-secondary)]">
+                {snippetTitle}
+              </span>
+              {article.data.phpVersion && (
+                <span class="font-mono font-semibold text-[var(--accent)]">
+                  PHP {article.data.phpVersion}
+                </span>
+              )}
+            </div>
+            <div class="p-3.5 text-xs leading-relaxed [&_.astro-code]:m-0 [&_.astro-code]:overflow-x-auto [&_.astro-code]:font-mono">
+              <Code
+                code={snippet}
+                lang="php"
+                themes={{ light: 'github-light', dark: 'github-dark' }}
+                defaultColor={false}
+              />
+            </div>
+          </div>
+        </div>
+      )
+    }
+  </div>
+</article>

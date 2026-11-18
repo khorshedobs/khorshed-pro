@@ -1,0 +1,87 @@
+---
+import { ExternalLink, Layers } from '@lucide/astro';
+import type { ArticleEntry, SeriesEntry } from '@/lib/content';
+import { getReadingTime } from '@/lib/reading-time';
+import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/Breadcrumbs.astro';
+import ArticleMetadata from './ArticleMetadata.astro';
+
+interface Props {
+  article: ArticleEntry;
+  series?: SeriesEntry;
+  breadcrumbs: BreadcrumbItem[];
+}
+
+const { article, series, breadcrumbs } = Astro.props;
+const readingTime = getReadingTime(article.body);
+---
+
+<header class="border-b border-[var(--border-color)] pb-9">
+  <Breadcrumbs items={breadcrumbs} />
+
+  <div class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs sm:text-sm">
+    {
+      series && (
+        <a
+          href={`/series/${series.id}/`}
+          class="inline-flex items-center gap-1.5 font-medium text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
+        >
+          <Layers class="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>
+            {series.data.title}
+            {article.data.seriesOrder
+              ? ` · Part ${String(article.data.seriesOrder).padStart(2, '0')}`
+              : ''}
+          </span>
+        </a>
+      )
+    }
+
+    {
+      article.data.phpVersion && (
+        <span class="rounded-md border border-[var(--border-color)] bg-[var(--bg-surface)] px-2 py-0.5 font-mono text-xs font-medium text-[var(--text-primary)]">
+          PHP {article.data.phpVersion}
+        </span>
+      )
+    }
+
+    {
+      article.data.difficulty && (
+        <span class="rounded-md border border-[var(--border-color)] bg-[var(--bg-surface)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
+          {article.data.difficulty}
+        </span>
+      )
+    }
+  </div>
+
+  <h1 class="heading-article max-w-4xl">
+    {article.data.title}
+  </h1>
+
+  <p class="mt-4 max-w-3xl text-lg leading-relaxed text-[var(--text-secondary)] sm:text-xl">
+    {article.data.description}
+  </p>
+
+  <div class="mt-7 flex flex-wrap items-center justify-between gap-4">
+    <ArticleMetadata
+      publishedAt={article.data.publishedAt}
+      updatedAt={article.data.updatedAt}
+      readingTimeLabel={readingTime.label}
+      author={article.data.author}
+      showAuthor={true}
+    />
+
+    {
+      article.data.repositoryURL && (
+        <a
+          href={article.data.repositoryURL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--accent)]"
+        >
+          <span>Source Repository</span>
+          <ExternalLink class="h-3.5 w-3.5" aria-hidden="true" />
+        </a>
+      )
+    }
+  </div>
+</header>

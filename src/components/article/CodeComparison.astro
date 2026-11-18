@@ -1,0 +1,146 @@
+---
+import { Code } from 'astro:components';
+import type { ComponentProps } from 'astro/types';
+import { createKhorshedShikiTransformer } from '@/lib/shiki-transformer';
+import CopyCodeButton from './CopyCodeButton.astro';
+
+type CodeLang = ComponentProps<typeof Code>['lang'];
+
+export interface ComparisonPanel {
+  label?: string;
+  version?: string;
+  language?: CodeLang;
+  file?: string;
+  code: string;
+  showLineNumbers?: boolean;
+  highlightLines?: number[];
+}
+
+interface Props {
+  title?: string;
+  description?: string;
+  summary?: string;
+  before: ComparisonPanel;
+  after: ComparisonPanel;
+}
+
+const { title, description, summary, before, after } = Astro.props;
+
+const beforeLabel = before.label ?? 'Before';
+const afterLabel = after.label ?? 'After';
+
+const beforeTransformer = createKhorshedShikiTransformer({
+  title: before.file,
+  phpVersion: before.version,
+  showLineNumbers: before.showLineNumbers,
+  highlightLines: before.highlightLines,
+});
+
+const afterTransformer = createKhorshedShikiTransformer({
+  title: after.file,
+  phpVersion: after.version,
+  showLineNumbers: after.showLineNumbers,
+  highlightLines: after.highlightLines,
+});
+---
+
+<section
+  class="my-8 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 sm:p-6"
+  aria-label={title ?? 'Code comparison'}
+>
+  {
+    (title || description) && (
+      <header class="mb-4">
+        {title && (
+          <h3 class="mt-0 mb-1 text-base font-semibold tracking-tight text-[var(--text-primary)] sm:text-lg">
+            {title}
+          </h3>
+        )}
+        {description && (
+          <p class="mb-0 text-sm leading-relaxed text-[var(--text-secondary)]">
+            {description}
+          </p>
+        )}
+      </header>
+    )
+  }
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <!-- Before panel -->
+    <figure
+      class="code-block-wrapper my-0 min-w-0 flex flex-col"
+      data-code-block
+      data-comparison-panel="before"
+    >
+      <div class="code-block-header">
+        <div class="code-block-meta">
+          <span class="rounded bg-amber-500/12 px-1.5 py-0.5 font-sans text-[11px] font-semibold tracking-wide text-amber-700 uppercase dark:text-amber-300">
+            {beforeLabel}
+          </span>
+          {before.version && (
+            <span class="code-block-version">{before.version}</span>
+          )}
+          {before.file && (
+            <span class="code-block-filename">{before.file}</span>
+          )}
+          {!before.file && before.language && (
+            <span class="code-block-lang">{String(before.language)}</span>
+          )}
+        </div>
+        <CopyCodeButton />
+      </div>
+      <div class="flex-1">
+        <Code
+          code={before.code.trimEnd()}
+          lang={before.language ?? 'php'}
+          themes={{ light: 'github-light', dark: 'github-dark' }}
+          defaultColor={false}
+          transformers={[beforeTransformer]}
+        />
+      </div>
+    </figure>
+
+    <!-- After panel -->
+    <figure
+      class="code-block-wrapper my-0 min-w-0 flex flex-col border-[var(--accent)]/45"
+      data-code-block
+      data-comparison-panel="after"
+    >
+      <div class="code-block-header">
+        <div class="code-block-meta">
+          <span class="rounded bg-[var(--accent-subtle)] px-1.5 py-0.5 font-sans text-[11px] font-semibold tracking-wide text-[var(--accent)] uppercase">
+            {afterLabel}
+          </span>
+          {after.version && (
+            <span class="code-block-version">{after.version}</span>
+          )}
+          {after.file && (
+            <span class="code-block-filename">{after.file}</span>
+          )}
+          {!after.file && after.language && (
+            <span class="code-block-lang">{String(after.language)}</span>
+          )}
+        </div>
+        <CopyCodeButton />
+      </div>
+      <div class="flex-1">
+        <Code
+          code={after.code.trimEnd()}
+          lang={after.language ?? 'php'}
+          themes={{ light: 'github-light', dark: 'github-dark' }}
+          defaultColor={false}
+          transformers={[afterTransformer]}
+        />
+      </div>
+    </figure>
+  </div>
+
+  {
+    summary && (
+      <p class="mt-4 mb-0 border-t border-[var(--border-color)] pt-3.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+        <strong class="font-semibold text-[var(--text-primary)]">Takeaway:</strong>{' '}
+        {summary}
+      </p>
+    )
+  }
+</section>

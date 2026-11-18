@@ -1,0 +1,42 @@
+---
+import { ArrowLeft, BookOpen, House } from '@lucide/astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/components/layout/Container.astro';
+import Button from '@/components/ui/Button.astro';
+---
+
+<BaseLayout
+  title="Page Not Found (404)"
+  description="The requested page could not be found on khorshed.pro."
+  noindex={true}
+>
+  <Container class="py-20 sm:py-28">
+    <div class="mx-auto max-w-xl text-center">
+      <p class="font-mono text-sm font-semibold tracking-wider text-[var(--accent)] uppercase">
+        404 — Not Found
+      </p>
+      <h1 class="heading-page mt-3">
+        This page does not exist
+      </h1>
+      <p class="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
+        The URL you requested may have moved, been renamed, or never existed. Use one of the
+        sections below to continue exploring.
+      </p>
+
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <Button href="/" variant="primary">
+          <House class="h-4 w-4" aria-hidden="true" />
+          <span>Go to Homepage</span>
+        </Button>
+        <Button href="/articles/" variant="secondary">
+          <BookOpen class="h-4 w-4" aria-hidden="true" />
+          <span>Browse Articles</span>
+        </Button>
+        <Button href="/series/modern-php-mastery/" variant="ghost">
+          <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+          <span>Modern PHP Mastery</span>
+        </Button>
+      </div>
+    </div>
+  </Container>
+</BaseLayout>

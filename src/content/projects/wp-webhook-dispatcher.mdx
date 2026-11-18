@@ -1,0 +1,45 @@
+---
+title: "WP Webhook Dispatcher"
+summary: "Asynchronous outbound webhook architecture with HMAC-SHA256 signing and bounded exponential retries for WordPress and WooCommerce."
+description: "A WordPress plugin architecture blueprint separating event capture from HTTP delivery so checkout and admin saves stay fast."
+projectType: "WordPress Plugin"
+technologies:
+  - "PHP"
+  - "WordPress"
+  - "WooCommerce"
+  - "REST API"
+featured: true
+draft: false
+status: "Blueprint"
+isSample: true
+order: 2
+problem: "Synchronous HTTP calls inside WordPress action hooks slow down checkout or admin saves and lose events permanently when downstream receivers experience transient timeouts."
+solution: "Decouple event capture from network delivery using queued dispatch jobs, HMAC-SHA256 payload signatures, and bounded exponential backoff retries."
+keyFeatures:
+  - "Signed outbound JSON payloads with timestamp replay protection"
+  - "Asynchronous dispatch queue separated from critical request paths"
+  - "Configurable retry schedules and failure inspection logs"
+  - "Strict capability checks and sanitized admin configuration screens"
+technicalDecisions:
+  - "Enqueue lightweight event pointers rather than full mutable objects so retries read consistent state."
+  - "Use WordPress coding standards and explicit hook boundaries for clean testability."
+  - "Enforce strict request timeouts to prevent worker exhaustion during third-party outages."
+---
+
+## Overview
+
+Modern WordPress and WooCommerce integrations frequently notify external billing, fulfillment, or analytics services. Performing those requests inline during action hooks creates latency spikes and silent data loss during remote outages.
+
+## Outbound Payload Contract
+
+```json title="schemas/webhook-payload.json"
+{
+  "event": "order.status_updated",
+  "timestamp": "2026-03-01T12:00:00Z",
+  "delivery_id": "wh_sample_01"
+}
+```
+
+## Reliability Model
+
+Each event records an immutable delivery envelope, delegates HTTP transport to an asynchronous runner, and signs both the timestamp and serialized payload to protect downstream endpoints against replay attacks.

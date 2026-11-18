@@ -1,0 +1,14 @@
+{
+  "title": "PHP Performance Engineering",
+  "subtitle": "Profiling, Memory Discipline, and Runtime Efficiency",
+  "description": "Upcoming series covering OPcache behavior, database query bottlenecks, memory profiling, and pragmatic optimization techniques.",
+  "status": "Planned",
+  "featured": false,
+  "order": 4,
+  "topics": [
+    "OPcache & Preloading",
+    "Profiling & Bottlenecks",
+    "Query Efficiency",
+    "Caching Strategies"
+  ]
+}

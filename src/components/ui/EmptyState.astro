@@ -1,0 +1,45 @@
+---
+import { FileText, FolderGit2, Mic } from '@lucide/astro';
+import Button from './Button.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  icon?: 'articles' | 'projects' | 'speaking';
+  actionLabel?: string;
+  actionHref?: string;
+}
+
+const {
+  title,
+  description,
+  icon = 'articles',
+  actionLabel,
+  actionHref,
+} = Astro.props;
+---
+
+<div
+  class="rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-surface)] px-6 py-12 text-center"
+>
+  <div
+    class="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--accent)]"
+  >
+    {icon === 'articles' && <FileText class="h-5 w-5" aria-hidden="true" />}
+    {icon === 'projects' && <FolderGit2 class="h-5 w-5" aria-hidden="true" />}
+    {icon === 'speaking' && <Mic class="h-5 w-5" aria-hidden="true" />}
+  </div>
+  <h2 class="text-lg font-semibold text-[var(--text-primary)]">{title}</h2>
+  <p class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
+    {description}
+  </p>
+  {
+    actionLabel && actionHref && (
+      <div class="mt-6">
+        <Button href={actionHref} variant="secondary" size="sm">
+          {actionLabel}
+        </Button>
+      </div>
+    )
+  }
+</div>

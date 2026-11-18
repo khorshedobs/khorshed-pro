@@ -1,0 +1,118 @@
+---
+import { ArrowRight, Layers } from '@lucide/astro';
+import type { ArticleEntry, SeriesEntry } from '@/lib/content';
+
+interface Props {
+  series: SeriesEntry;
+  seriesArticles: ArticleEntry[];
+  currentArticleId: string;
+}
+
+const { series, seriesArticles, currentArticleId } = Astro.props;
+const currentIndex = seriesArticles.findIndex((a) => a.id === currentArticleId);
+const currentArticle = currentIndex >= 0 ? seriesArticles[currentIndex] : undefined;
+const currentPartNumber = currentArticle?.data.seriesOrder ?? currentIndex + 1;
+
+const allPhpMilestones = series.id === 'modern-php-mastery'
+  ? ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6']
+  : [];
+
+const publishedVersions = new Set(
+  seriesArticles.map((a) => a.data.phpVersion).filter((v): v is string => Boolean(v)),
+);
+const plannedMilestones = allPhpMilestones.filter((v) => !publishedVersions.has(v));
+---
+
+{
+  seriesArticles.length > 0 && (
+    <section
+      aria-label="Series navigation"
+      class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6"
+    >
+      <div class="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-color)] pb-4">
+        <div>
+          <p class="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider text-[var(--accent)] uppercase">
+            <Layers class="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {currentIndex >= 0
+                ? `${series.data.title} — Part ${String(currentPartNumber).padStart(2, '0')}`
+                : 'Series'}
+            </span>
+          </p>
+          <h2 class="mt-1 text-lg font-semibold text-[var(--text-primary)]">
+            <a href={`/series/${series.id}/`} class="hover:text-[var(--accent)]">
+              {series.data.title}
+            </a>
+          </h2>
+          <p class="mt-0.5 text-xs text-[var(--text-secondary)]">
+            {seriesArticles.length}{' '}
+            {seriesArticles.length === 1 ? 'published chapter' : 'published chapters'}
+            {currentIndex >= 0 ? ` · Reading Part ${String(currentPartNumber).padStart(2, '0')}` : ''}
+          </p>
+        </div>
+
+        <a
+          href={`/series/${series.id}/`}
+          class="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+        >
+          <span>Full curriculum</span>
+          <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+        </a>
+      </div>
+
+      <div class="mt-4">
+        <p class="mb-2 text-[11px] font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+          Published Chapters
+        </p>
+        <ol class="space-y-2">
+          {seriesArticles.map((item, idx) => {
+            const isCurrent = item.id === currentArticleId;
+            const partNum = item.data.seriesOrder ?? idx + 1;
+            return (
+              <li>
+                <a
+                  href={`/articles/${item.id}/`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  class={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    isCurrent
+                      ? 'border border-[var(--accent)]/40 bg-[var(--accent-subtle)] font-medium text-[var(--text-primary)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <span class="flex items-center gap-2.5">
+                    <span class="font-mono text-xs text-[var(--accent)]">
+                      {String(partNum).padStart(2, '0')}
+                    </span>
+                    <span>{item.data.title}</span>
+                  </span>
+                  {item.data.phpVersion && (
+                    <span class="shrink-0 font-mono text-xs text-[var(--text-secondary)]">
+                      PHP {item.data.phpVersion}
+                    </span>
+                  )}
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
+      {
+        plannedMilestones.length > 0 && (
+          <div class="mt-5 border-t border-[var(--border-color)] pt-4">
+            <p class="mb-2 text-[11px] font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+              Planned Version Coverage
+            </p>
+            <ul class="flex flex-wrap gap-1.5" aria-label="Planned PHP versions">
+              {plannedMilestones.map((ver) => (
+                <li class="rounded-md border border-dashed border-[var(--border-color)] px-2 py-0.5 font-mono text-xs text-[var(--text-secondary)]">
+                  PHP {ver} (Planned)
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </section>
+  )
+}

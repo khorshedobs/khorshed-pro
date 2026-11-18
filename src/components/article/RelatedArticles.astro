@@ -1,0 +1,28 @@
+---
+import type { ArticleEntry } from '@/lib/content';
+import ArticleCard from './ArticleCard.astro';
+
+interface Props {
+  articles: ArticleEntry[];
+}
+
+const { articles } = Astro.props;
+---
+
+{
+  articles.length > 0 && (
+    <section aria-labelledby="related-articles-heading" class="mt-14 border-t border-[var(--border-color)] pt-12">
+      <h2
+        id="related-articles-heading"
+        class="mb-6 text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl"
+      >
+        Related Articles
+      </h2>
+      <div class="grid gap-6 md:grid-cols-2">
+        {articles.map((article) => (
+          <ArticleCard article={article} />
+        ))}
+      </div>
+    </section>
+  )
+}

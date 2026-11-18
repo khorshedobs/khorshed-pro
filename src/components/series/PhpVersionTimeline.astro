@@ -1,0 +1,100 @@
+---
+import type { ArticleEntry } from '@/lib/content';
+
+interface Props {
+  publishedArticles: ArticleEntry[];
+  seriesId?: string;
+  compact?: boolean;
+}
+
+const {
+  publishedArticles,
+  seriesId = 'modern-php-mastery',
+  compact = false,
+} = Astro.props;
+
+const phpVersions = [
+  { version: '8.0', note: 'Types & Match' },
+  { version: '8.1', note: 'Enums & Fibers' },
+  { version: '8.2', note: 'Readonly Classes' },
+  { version: '8.3', note: 'Typed Constants' },
+  { version: '8.4', note: 'Property Hooks' },
+  { version: '8.5', note: 'Pipe Operator' },
+  { version: '8.6', note: 'Upcoming' },
+];
+
+const versionCounts = new Map<string, number>();
+for (const article of publishedArticles) {
+  if (article.data.phpVersion) {
+    versionCounts.set(
+      article.data.phpVersion,
+      (versionCounts.get(article.data.phpVersion) ?? 0) + 1,
+    );
+  }
+}
+---
+
+<div aria-label="PHP 8.0 to 8.6 progression">
+  <ol class="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-7">
+    {
+      phpVersions.map((item) => {
+        const count = versionCounts.get(item.version) ?? 0;
+        const hasPublished = count > 0;
+        const anchorId = `php-${item.version.replace('.', '-')}`;
+        const href = hasPublished
+          ? `/series/${seriesId}/#${anchorId}`
+          : undefined;
+
+        return (
+          <li>
+            {href ? (
+              <a
+                href={href}
+                class={`group flex h-full flex-col justify-between rounded-xl border border-[var(--accent)]/40 bg-[var(--accent-subtle)] transition-colors hover:border-[var(--accent)] ${
+                  compact ? 'p-3' : 'p-3.5'
+                }`}
+              >
+                <div class="flex items-center justify-between gap-1.5">
+                  <span class="font-mono text-sm font-bold text-[var(--accent)]">
+                    {item.version}
+                  </span>
+                  <span class="rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {count}
+                  </span>
+                </div>
+                <div class="mt-2">
+                  <p class="text-xs font-medium text-[var(--text-primary)] group-hover:text-[var(--accent)]">
+                    {item.note}
+                  </p>
+                  <p class="mt-0.5 text-[11px] text-[var(--text-secondary)]">
+                    Published
+                  </p>
+                </div>
+              </a>
+            ) : (
+              <div
+                class={`flex h-full flex-col justify-between rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-primary)]/60 ${
+                  compact ? 'p-3' : 'p-3.5'
+                }`}
+              >
+                <div class="flex items-center justify-between gap-1.5">
+                  <span class="font-mono text-sm font-semibold text-[var(--text-secondary)]">
+                    {item.version}
+                  </span>
+                </div>
+                <div class="mt-2">
+                  <p class="text-xs font-medium text-[var(--text-secondary)]">
+                    {item.note}
+                  </p>
+                  <p class="mt-0.5 text-[11px] text-[var(--text-secondary)]/80">
+                    Planned
+                  </p>
+                </div>
+              </div>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</div>

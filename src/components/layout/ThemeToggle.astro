@@ -1,0 +1,70 @@
+---
+import { Moon, Sun } from '@lucide/astro';
+---
+
+<button
+  type="button"
+  data-theme-toggle
+  class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+  aria-label="Toggle color theme"
+  title="Toggle light/dark theme"
+>
+  <span class="theme-icon-sun hidden">
+    <Sun class="h-4 w-4" aria-hidden="true" />
+  </span>
+  <span class="theme-icon-moon block">
+    <Moon class="h-4 w-4" aria-hidden="true" />
+  </span>
+</button>
+
+<style is:global>
+  html.dark [data-theme-toggle] .theme-icon-sun {
+    display: block;
+  }
+  html.dark [data-theme-toggle] .theme-icon-moon {
+    display: none;
+  }
+</style>
+
+<script>
+  function initThemeToggle() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]');
+    if (!buttons.length) return;
+
+    const updateButtonLabels = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      buttons.forEach((btn) => {
+        btn.setAttribute(
+          'aria-label',
+          isDark ? 'Switch to light theme' : 'Switch to dark theme',
+        );
+        btn.setAttribute('aria-pressed', String(isDark));
+      });
+    };
+
+    const setTheme = (theme: 'light' | 'dark') => {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+      } catch {
+        // Ignore storage errors in restricted browsing contexts
+      }
+      updateButtonLabels();
+    };
+
+    updateButtonLabels();
+
+    buttons.forEach((btn) => {
+      if (btn.dataset.bound === 'true') return;
+      btn.dataset.bound = 'true';
+      btn.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        setTheme(isDark ? 'light' : 'dark');
+      });
+    });
+  }
+
+  initThemeToggle();
+  document.addEventListener('astro:after-swap', initThemeToggle);
+</script>

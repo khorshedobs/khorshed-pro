@@ -1,0 +1,139 @@
+---
+import { Menu, X } from '@lucide/astro';
+import { siteConfig } from '@/config/site';
+
+interface Props {
+  currentPath: string;
+  part: 'button' | 'drawer';
+}
+
+const { currentPath, part } = Astro.props;
+
+function isActive(href: string, path: string): boolean {
+  if (href === '/') return path === '/';
+  return path.startsWith(href);
+}
+
+const mobileNavItems = [{ label: 'Home', href: '/' }, ...siteConfig.navigation];
+---
+
+{
+  part === 'button' && (
+    <div class="md:hidden">
+      <button
+        type="button"
+        id="mobile-nav-toggle"
+        class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+        aria-expanded="false"
+        aria-controls="mobile-nav-drawer"
+        aria-label="Open navigation menu"
+      >
+        <span id="mobile-nav-icon-open">
+          <Menu class="h-4 w-4" aria-hidden="true" />
+        </span>
+        <span id="mobile-nav-icon-close" class="hidden">
+          <X class="h-4 w-4" aria-hidden="true" />
+        </span>
+      </button>
+    </div>
+  )
+}
+
+{
+  part === 'drawer' && (
+    <>
+      <div
+        id="mobile-nav-drawer"
+        class="hidden w-full border-t border-[var(--border-color)] bg-[var(--bg-primary)] shadow-lg md:hidden"
+        aria-label="Mobile navigation"
+      >
+        <nav class="mx-auto max-w-6xl px-4 py-4 sm:px-6">
+          <ul class="flex flex-col gap-1">
+            {mobileNavItems.map((item) => {
+              const active = isActive(item.href, currentPath);
+              return (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    class={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                      active
+                        ? 'bg-[var(--accent-subtle)] text-[var(--accent)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
+
+      <script>
+        function initMobileNav() {
+          const toggle = document.getElementById('mobile-nav-toggle') as HTMLButtonElement | null;
+          const drawer = document.getElementById('mobile-nav-drawer');
+          const openIcon = document.getElementById('mobile-nav-icon-open');
+          const closeIcon = document.getElementById('mobile-nav-icon-close');
+          const mainEl = document.getElementById('main-content');
+          const footerEl = document.querySelector('footer');
+
+          if (!toggle || !drawer || !openIcon || !closeIcon) return;
+          if (toggle.dataset.bound === 'true') return;
+          toggle.dataset.bound = 'true';
+
+          const setBackgroundInert = (isInert: boolean) => {
+            if (mainEl) mainEl.inert = isInert;
+            if (footerEl) footerEl.inert = isInert;
+          };
+
+          const setOpen = (isOpen: boolean, restoreFocus = false) => {
+            toggle.setAttribute('aria-expanded', String(isOpen));
+            toggle.setAttribute(
+              'aria-label',
+              isOpen ? 'Close navigation menu' : 'Open navigation menu',
+            );
+            drawer.classList.toggle('hidden', !isOpen);
+            openIcon.classList.toggle('hidden', isOpen);
+            closeIcon.classList.toggle('hidden', !isOpen);
+            setBackgroundInert(isOpen);
+
+            if (isOpen) {
+              const firstLink = drawer.querySelector<HTMLAnchorElement>('a');
+              firstLink?.focus();
+            } else if (restoreFocus) {
+              toggle.focus();
+            }
+          };
+
+          toggle.addEventListener('click', () => {
+            const expanded = toggle.getAttribute('aria-expanded') === 'true';
+            setOpen(!expanded, expanded);
+          });
+
+          document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+              setOpen(false, true);
+            }
+          });
+
+          drawer.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', () => setOpen(false, false));
+          });
+
+          const mediaQuery = window.matchMedia('(min-width: 768px)');
+          mediaQuery.addEventListener('change', (event) => {
+            if (event.matches && toggle.getAttribute('aria-expanded') === 'true') {
+              setOpen(false, false);
+            }
+          });
+        }
+
+        initMobileNav();
+        document.addEventListener('astro:after-swap', initMobileNav);
+      </script>
+    </>
+  )
+}

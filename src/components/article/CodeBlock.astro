@@ -1,0 +1,66 @@
+---
+import { Code } from 'astro:components';
+import type { ComponentProps } from 'astro/types';
+import { createKhorshedShikiTransformer } from '@/lib/shiki-transformer';
+import CopyCodeButton from './CopyCodeButton.astro';
+
+type CodeLang = ComponentProps<typeof Code>['lang'];
+
+interface Props {
+  code: string;
+  lang?: CodeLang;
+  filename?: string;
+  title?: string;
+  phpVersion?: string;
+  caption?: string;
+  showLineNumbers?: boolean;
+  highlightLines?: number[];
+}
+
+const {
+  code,
+  lang = 'plaintext',
+  filename,
+  title,
+  phpVersion,
+  caption,
+  showLineNumbers = false,
+  highlightLines = [],
+} = Astro.props;
+
+const displayTitle = filename ?? title;
+const transformer = createKhorshedShikiTransformer({
+  title: displayTitle,
+  phpVersion,
+  caption,
+  showLineNumbers,
+  highlightLines,
+});
+---
+
+<figure class="code-block-wrapper" data-code-block>
+  <div class="code-block-header">
+    <div class="code-block-meta">
+      <span class="code-block-lang">{String(lang)}</span>
+      {
+        phpVersion && (
+          <span class="code-block-version">
+            {phpVersion.toLowerCase().startsWith('php')
+              ? phpVersion
+              : `PHP ${phpVersion}`}
+          </span>
+        )
+      }
+      {displayTitle && <span class="code-block-filename">{displayTitle}</span>}
+    </div>
+    <CopyCodeButton />
+  </div>
+  <Code
+    code={code.trimEnd()}
+    lang={lang}
+    themes={{ light: 'github-light', dark: 'github-dark' }}
+    defaultColor={false}
+    transformers={[transformer]}
+  />
+  {caption && <figcaption class="code-block-caption">{caption}</figcaption>}
+</figure>

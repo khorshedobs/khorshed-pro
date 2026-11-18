@@ -1,0 +1,46 @@
+{
+  "slug": "php-84-property-hooks",
+  "title": "PHP 8.4 Property Hooks: Computed and Validated State Without Boilerplate",
+  "phpVersion": "8.4",
+  "series": "modern-php-mastery",
+  "articleStatus": "published",
+  "draft": false,
+  "technicalVerificationStatus": "runtime-tested",
+  "readyForManualPosting": true,
+  "canonicalUrl": "https://khorshed.pro/articles/php-84-property-hooks/",
+  "ogImagePath": "/og/articles/php-84-property-hooks.png",
+  "utmLinks": {
+    "linkedin": "https://khorshed.pro/articles/php-84-property-hooks/?utm_source=linkedin&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-84-property-hooks",
+    "facebook": "https://khorshed.pro/articles/php-84-property-hooks/?utm_source=facebook&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-84-property-hooks",
+    "x": "https://khorshed.pro/articles/php-84-property-hooks/?utm_source=x&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-84-property-hooks"
+  },
+  "xPostCharCounts": [
+    {
+      "post": 1,
+      "length": 192,
+      "withinLimit": true
+    },
+    {
+      "post": 2,
+      "length": 183,
+      "withinLimit": true
+    },
+    {
+      "post": 3,
+      "length": 203,
+      "withinLimit": true
+    },
+    {
+      "post": 4,
+      "length": 170,
+      "withinLimit": true
+    },
+    {
+      "post": 5,
+      "length": 270,
+      "withinLimit": true
+    }
+  ],
+  "generatedAt": "2026-11-18",
+  "automationMode": "manual-copy-only"
+}

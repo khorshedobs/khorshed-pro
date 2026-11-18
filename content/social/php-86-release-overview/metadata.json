@@ -1,0 +1,46 @@
+{
+  "slug": "php-86-release-overview",
+  "title": "PHP 8.6: The Features That Actually Matter to Professional Developers",
+  "phpVersion": "8.6",
+  "series": "modern-php-mastery",
+  "articleStatus": "drafting",
+  "draft": true,
+  "technicalVerificationStatus": "awaiting-php-release",
+  "readyForManualPosting": false,
+  "canonicalUrl": "https://khorshed.pro/articles/php-86-release-overview/",
+  "ogImagePath": "/og/default.png",
+  "utmLinks": {
+    "linkedin": "https://khorshed.pro/articles/php-86-release-overview/?utm_source=linkedin&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-86-release-overview",
+    "facebook": "https://khorshed.pro/articles/php-86-release-overview/?utm_source=facebook&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-86-release-overview",
+    "x": "https://khorshed.pro/articles/php-86-release-overview/?utm_source=x&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-86-release-overview"
+  },
+  "xPostCharCounts": [
+    {
+      "post": 1,
+      "length": 168,
+      "withinLimit": true
+    },
+    {
+      "post": 2,
+      "length": 188,
+      "withinLimit": true
+    },
+    {
+      "post": 3,
+      "length": 163,
+      "withinLimit": true
+    },
+    {
+      "post": 4,
+      "length": 186,
+      "withinLimit": true
+    },
+    {
+      "post": 5,
+      "length": 224,
+      "withinLimit": true
+    }
+  ],
+  "generatedAt": "2026-11-18",
+  "automationMode": "manual-copy-only"
+}

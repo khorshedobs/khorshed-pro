@@ -1,28 +1,37 @@
 ---
 title: "PHP 8.5 Pipe Operator: Readable Left-to-Right Data Transformations"
-description: "Introducing PHP 8.5's pipe operator (|>), how it composes with first-class callables, precedence rules, and where readability improves."
+description: "Introducing PHP 8.5's pipe operator (|>), how it composes with first-class callables, precedence rules, payload sanitization pipelines, and where readability improves."
 publishedAt: 2026-11-18
 draft: false
 status: "published"
 featured: true
 category: "PHP"
+sectionCategory: "Functional Programming"
 tags:
   - "php"
   - "php-8.5"
   - "functional-php"
   - "modern-php"
 series: "modern-php-mastery"
-seriesOrder: 2
+seriesOrder: 22
 phpVersion: "8.5"
 minimumPhpVersion: "8.5"
 testedPhpVersions:
   - "8.5.12"
+technicalVerificationStatus: "runtime-tested"
 requiredExtensions: []
 difficulty: "Intermediate"
 author: "Khorshed Alam"
 repositoryURL: "https://github.com/khorshedobs/khorshed-pro"
 examplePath: "examples/php-8-5/pipe-operator/"
 testsPath: "examples/php-8-5/pipe-operator/tests/PipeOperatorTest.php"
+researchReferences:
+  - title: "PHP RFC: Pipe operator v3"
+    url: "https://wiki.php.net/rfc/pipe-operator-v3"
+    status: "Implemented"
+  - title: "PHP 8.5 Release Announcement"
+    url: "https://www.php.net/releases/8.5/en.php"
+    status: "Released Documentation"
 relatedArticles:
   - "php-84-property-hooks"
 isSampleContent: false
@@ -70,7 +79,7 @@ Data transformation pipelines are common across backend PHP code—normalizing r
 PHP 8.5 introduces the **pipe operator (`|>`)**, enabling left-to-right function composition where the value on the left is passed as the single argument to the callable on the right.
 
 <Callout type="compatibility" title="PHP 8.5 Language Feature">
-  The pipe operator (`|>`) requires **PHP 8.5 or later**. All examples in this article were validated against **PHP 8.5.12** with no extra extensions required.
+  The pipe operator (`|>`) requires **PHP 8.5 or later**. All companion examples in this guide were verified against **PHP 8.5.12** with no extra extensions required.
 </Callout>
 
 ## Comparing Nested Calls and Pipe Chains
@@ -127,6 +136,44 @@ function normalizeSlug(string $title): string
 }
 ```
 
+## Practical Payload Sanitization Pipeline
+
+In controller boundaries, form handlers, and webhook consumers, multiple independent input fields often share small single-argument sanitizers. Composing static helper callables with `|>` keeps normalization declarative and easy to scan:
+
+```php title="examples/php-8-5/pipe-operator/src/PayloadSanitizer.php" php="8.5" showLineNumbers highlight={15-24} caption="Combining built-in PHP functions with domain-specific first-class callables in a request sanitizer."
+<?php
+
+declare(strict_types=1);
+
+namespace KhorshedPro\Examples\Php85\PipeOperator;
+
+final class PayloadSanitizer
+{
+    /**
+     * @param array{email?: string, tags?: string, title?: string} $payload
+     * @return array{email: string, slug: string, tags: list<string>}
+     */
+    public static function sanitize(array $payload): array
+    {
+        $email = ($payload['email'] ?? '')
+            |> trim(...)
+            |> strtolower(...);
+
+        $slug = ($payload['title'] ?? '')
+            |> Slugger::normalize(...);
+
+        $tags = ($payload['tags'] ?? '')
+            |> TagNormalizer::normalizePiped(...);
+
+        return [
+            'email' => $email,
+            'slug' => $slug,
+            'tags' => $tags,
+        ];
+    }
+}
+```
+
 ## Precedence and Execution Semantics
 
 When writing piped expressions in PHP 8.5, keep three evaluation rules in mind:
@@ -137,6 +184,10 @@ When writing piped expressions in PHP 8.5, keep three evaluation rules in mind:
 
 <Callout type="tip" title="Parenthesize Arrow Functions Inside Pipe Chains">
   Because `fn (...) => ...` has looser precedence boundaries around subsequent operators, always wrap inline arrow functions in parentheses—`(fn (string $v) => ...)`—before piping into the next step.
+</Callout>
+
+<Callout type="performance" title="Readability First, Not Magical Speedups">
+  The pipe operator (`|>`) is primarily a readability and composition improvement over deeply nested function calls or throwaway variables. Each step still performs a normal PHP callable invocation, so avoid treating `|>` as an optimization mechanism on its own.
 </Callout>
 
 ## When Not to Use Pipes
@@ -150,3 +201,4 @@ Pipes shine for linear transformations on values, strings, arrays, and DTOs. Avo
 ## Official References
 
 - [PHP RFC: Pipe operator v3](https://wiki.php.net/rfc/pipe-operator-v3)
+- [PHP 8.5 Release Notes](https://www.php.net/releases/8.5/en.php)

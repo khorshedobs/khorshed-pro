@@ -74,10 +74,24 @@ npm run validate:examples
 npm run build && npm run test:build
 ```
 
-For full Phase 3 technical authoring and PHP verification documentation, see:
+Run article scaffolding, Open Graph generation, and social distribution kits:
+
+```bash
+npm run article:new
+npm run og:generate
+npm run social:generate -- --slug <slug>
+```
+
+For full Phase 3–4 authoring, editorial workflow, SEO, and distribution documentation, see:
 
 - [docs/ARTICLE_AUTHORING.md](docs/ARTICLE_AUTHORING.md)
 - [docs/EXAMPLE_VALIDATION.md](docs/EXAMPLE_VALIDATION.md)
+- [docs/EDITORIAL_ROADMAP.md](docs/EDITORIAL_ROADMAP.md)
+- [docs/EDITORIAL_STANDARDS.md](docs/EDITORIAL_STANDARDS.md)
+- [docs/PHP_RESEARCH_GUIDELINES.md](docs/PHP_RESEARCH_GUIDELINES.md)
+- [docs/ARTICLE_PUBLICATION_WORKFLOW.md](docs/ARTICLE_PUBLICATION_WORKFLOW.md)
+- [docs/SOCIAL_DISTRIBUTION.md](docs/SOCIAL_DISTRIBUTION.md)
+- [docs/SEO_CHECKLIST.md](docs/SEO_CHECKLIST.md)
 
 Sync Astro Content Collection types manually if needed:
 

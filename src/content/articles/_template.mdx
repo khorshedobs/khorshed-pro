@@ -1,48 +1,54 @@
 ---
 title: "PHP X.Y Feature Name: Concise Technical Subtitle"
-description: "One-to-two sentence summary explaining what problem this feature solves and what the article covers."
+description: "One-to-two sentence summary explaining the engineering problem and what this tutorial covers."
 publishedAt: 2026-11-18
 draft: true
-status: "draft"
+status: "drafting"
 featured: false
 category: "PHP"
+sectionCategory: "Language Features"
 tags:
   - "php"
   - "modern-php"
 series: "modern-php-mastery"
-seriesOrder: 10
+seriesOrder: 99
 phpVersion: "8.4"
 minimumPhpVersion: "8.4"
 testedPhpVersions: []
+technicalVerificationStatus: "unverified"
 requiredExtensions: []
 difficulty: "Intermediate"
 author: "Khorshed Alam"
-# repositoryURL: "https://github.com/your-username/your-examples-repo"
+repositoryURL: "https://github.com/khorshedobs/khorshed-pro"
 # examplePath: "examples/php-8-4/feature-slug/"
 # testsPath: "examples/php-8-4/feature-slug/tests/FeatureTest.php"
+researchReferences:
+  - title: "PHP Manual"
+    url: "https://www.php.net/manual/en/"
+    status: "Released Documentation"
 relatedArticles: []
 isSampleContent: false
 ---
 import CodeComparison from '@/components/article/CodeComparison.astro';
 import Callout from '@/components/article/Callout.astro';
 
-{/* Delete any sections that do not genuinely help the reader for a specific topic. */}
+{/* Delete any sections below that do not genuinely help the reader. */}
 
 ## Introduction
 
-Briefly introduce the engineering problem and the PHP version or ecosystem shift covered in this article.
+Introduce the engineering problem and why this PHP capability matters in real codebases.
 
 <Callout type="compatibility" title="PHP Compatibility">
-  State exact version requirements and distinguish introduced version from verified test runtimes.
+  Document introduced version, minimum runtime, and verified test status explicitly.
 </Callout>
 
-## The Problem
+## The Engineering Problem
 
-Describe the limitation, boilerplate, or failure mode developers encountered prior to this feature.
+Describe the limitation, boilerplate, or failure mode present before this feature.
 
-## How It Worked Before
+## Traditional Implementation
 
-Show the idiomatic earlier pattern concisely.
+Show how PHP developers historically solved the problem.
 
 ```php title="src/BeforeExample.php" php="8.3" showLineNumbers
 <?php
@@ -50,11 +56,15 @@ Show the idiomatic earlier pattern concisely.
 declare(strict_types=1);
 ```
 
-## The New PHP Feature: Syntax and Behavior
+## Introduction of the New PHP Feature
 
-Explain the language mechanics, evaluation order, and type-system guarantees accurately.
+Explain syntax, evaluation semantics, and type-system guarantees.
 
-```php title="src/AfterExample.php" php="8.4" showLineNumbers highlight={5-7} caption="Highlight key lines and include concise captions."
+## Complete Practical Example
+
+Walk through a self-contained, testable domain or backend example backed by files in `examples/`.
+
+```php title="src/AfterExample.php" php="8.4" showLineNumbers highlight={5-7} caption="Highlight key lines and explain what happens."
 <?php
 
 declare(strict_types=1);
@@ -63,15 +73,15 @@ declare(strict_types=1);
 ## Before and After Comparison
 
 <CodeComparison
-  title="Legacy Pattern vs. Modern Approach"
-  description="Compare readability, boilerplate, and safety guarantees side by side."
-  summary="Summarize the practical trade-off in one clear sentence."
+  title="Traditional Pattern vs. Modern PHP Approach"
+  description="Compare readability, safety, and maintainability side by side."
+  summary="Summarize the real engineering trade-off in one concrete sentence."
   before={{
     label: "Before",
     version: "PHP 8.3",
     language: "php",
     file: "Before.php",
-    code: `// Earlier implementation`,
+    code: `// Traditional implementation`,
   }}
   after={{
     label: "After",
@@ -82,32 +92,34 @@ declare(strict_types=1);
   }}
 />
 
-## Practical Example
+## Important Edge Cases and Type-System Implications
 
-Walk through a realistic domain model, service, or integration scenario backed by verified files in `examples/`.
+Document runtime restrictions, static analysis caveats, and variance or inheritance rules.
 
-## Edge Cases and Limitations
-
-Document runtime restrictions, static analysis caveats, or invalid combinations verified against PHP.
-
-<Callout type="warning" title="Key Caveat">
-  Highlight subtle runtime errors or constraints readers are likely to hit.
+<Callout type="warning" title="Key Limitation">
+  Highlight runtime edge cases or disallowed combinations verified against PHP.
 </Callout>
 
-## Performance and Security Considerations
+## Performance, Security, and Migration Considerations
 
-Note memory, OPcache, validation, or untrusted-input implications only when technically relevant.
+Discuss OPcache/memory, validation boundaries, and upgrade risks where relevant.
 
-## When to Use It — and When Not To
+## Compatibility and Prerequisites
 
-- **Use it when:** List concrete conditions where the feature simplifies code cleanly.
-- **Avoid it when:** List scenarios where traditional methods or explicit control flow remain clearer.
+- **Introduced in:** PHP X.Y
+- **Minimum PHP:** X.Y
+- **Required extensions:** None
+
+## When to Use — and When Not to Use
+
+- **Use it when:** Concrete scenarios where the feature clarifies intent.
+- **Avoid it when:** Scenarios where traditional constructs remain clearer or safer.
 
 ## Key Takeaways
 
-- Concise summary point one.
-- Concise summary point two.
+- Concise, verifiable summary point one.
+- Concise, verifiable summary point two.
 
 ## Official References
 
-- Link to the official PHP documentation or accepted RFC.
+- [PHP Manual / RFC Reference](https://www.php.net/)

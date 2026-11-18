@@ -1,18 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import {
   buildCompatibilityDisplay,
+  extractMarkdownHeadings,
   filterAndSortArticles,
   filterTocHeadings,
   getAdjacentArticles,
   getArticlesForSeries,
+  getAvailableArticleFacets,
   getRelatedArticles,
   groupSeriesArticlesByPhpVersion,
   isArticlePublic,
 } from '../src/lib/article-logic.ts';
 import { getReadingTime } from '../src/lib/reading-time.ts';
 import { formatDate, formatIsoDate } from '../src/lib/date.ts';
+import { buildSocialTrackingUrl } from '../src/lib/utm.ts';
 import {
   createKhorshedShikiTransformer,
   parseCodeFenceMeta,
@@ -206,4 +211,154 @@ test('Shiki meta parser and transformer support highlight ranges, line numbers, 
   assert.equal(lineNode.properties['data-highlighted'], 'true');
   assert.ok(addedClasses.includes('highlighted'));
   assert.ok(addedClasses.includes('diff-add'));
+});
+
+test('30-article editorial roadmap maintains exact 5/4/4/4/4/4/5 PHP version allocation and unique identifiers', () => {
+  const roadmapPath = path.resolve('src/data/editorial-roadmap.json');
+  const roadmap = JSON.parse(fs.readFileSync(roadmapPath, 'utf8'));
+
+  assert.equal(roadmap.seriesId, 'modern-php-mastery');
+  assert.equal(roadmap.targetTotal, 30);
+  assert.equal(roadmap.articles.length, 30);
+
+  const expectedCounts = { '8.0': 5, '8.1': 4, '8.2': 4, '8.3': 4, '8.4': 4, '8.5': 4, '8.6': 5 };
+  const actualCounts = Object.fromEntries(Object.keys(expectedCounts).map((v) => [v, 0]));
+  const ids = new Set();
+  const slugs = new Set();
+  const orders = new Set();
+
+  for (const item of roadmap.articles) {
+    assert.ok(item.id, 'roadmap item must have id');
+    assert.ok(item.slug, 'roadmap item must have slug');
+    assert.equal(typeof item.seriesOrder, 'number', 'roadmap item must have numeric seriesOrder');
+    assert.ok(!ids.has(item.id), `duplicate roadmap id: ${item.id}`);
+    assert.ok(!slugs.has(item.slug), `duplicate roadmap slug: ${item.slug}`);
+    assert.ok(!orders.has(item.seriesOrder), `duplicate roadmap seriesOrder: ${item.seriesOrder}`);
+    ids.add(item.id);
+    slugs.add(item.slug);
+    orders.add(item.seriesOrder);
+    actualCounts[item.phpVersion] += 1;
+  }
+
+  assert.deepEqual(actualCounts, expectedCounts);
+});
+
+test('extended Phase 4 editorial statuses stay excluded until published with draft false', () => {
+  const nonPublicStatuses = [
+    'idea',
+    'researching',
+    'drafting',
+    'draft',
+    'technical-review',
+    'editorial-review',
+    'ready',
+  ];
+
+  for (const status of nonPublicStatuses) {
+    const entry = makeArticle({ id: `art-${status}`, data: { draft: false, status } });
+    assert.equal(isArticlePublic(entry), false, `status "${status}" must not be public`);
+  }
+
+  assert.equal(
+    isArticlePublic(makeArticle({ id: 'live', data: { draft: false, status: 'published' } })),
+    true,
+  );
+  assert.equal(
+    isArticlePublic(makeArticle({ id: 'draft-flag', data: { draft: true, status: 'published' } })),
+    false,
+  );
+
+  const list = [
+    makeArticle({ id: 'one', data: { draft: false, status: 'published' } }),
+    makeArticle({ id: 'two', data: { draft: true, status: 'technical-review' } }),
+    makeArticle({ id: 'three', data: { draft: false, status: 'ready' } }),
+  ];
+  assert.deepEqual(
+    filterAndSortArticles(list).map((a) => a.id),
+    ['one'],
+  );
+});
+
+test('extractMarkdownHeadings, getAvailableArticleFacets, and buildSocialTrackingUrl work accurately', () => {
+  const headings = extractMarkdownHeadings(
+    `## Introduction\nSome text\n\`\`\`php\n## Fake Comment Heading\n\`\`\`\n### Edge Cases and \`readonly\` Rules\n`,
+  );
+  assert.deepEqual(headings, ['Introduction', 'Edge Cases and readonly Rules']);
+
+  const articles = [
+    makeArticle({
+      id: 'a',
+      data: {
+        phpVersion: '8.4',
+        sectionCategory: 'Object-Oriented Design',
+        difficulty: 'Intermediate',
+      },
+    }),
+    makeArticle({
+      id: 'b',
+      data: {
+        phpVersion: '8.5',
+        sectionCategory: 'Functional Programming',
+        difficulty: 'Advanced',
+      },
+    }),
+    makeArticle({
+      id: 'hidden-draft',
+      data: {
+        draft: true,
+        status: 'drafting',
+        phpVersion: '8.6',
+        sectionCategory: 'Language Features',
+        difficulty: 'Beginner',
+      },
+    }),
+  ];
+
+  const facets = getAvailableArticleFacets(articles);
+  assert.deepEqual(facets.phpVersions, ['8.4', '8.5']);
+  assert.deepEqual(facets.sectionCategories, ['Functional Programming', 'Object-Oriented Design']);
+  assert.deepEqual(facets.difficulties, ['Intermediate', 'Advanced']);
+
+  const linkedInUrl = buildSocialTrackingUrl({
+    articleUrl: 'https://khorshed.pro/articles/php-85-pipe-operator/',
+    platform: 'linkedin',
+    content: 'php-85-pipe-operator',
+  });
+  const parsed = new URL(linkedInUrl);
+  assert.equal(parsed.searchParams.get('utm_source'), 'linkedin');
+  assert.equal(parsed.searchParams.get('utm_medium'), 'social');
+  assert.equal(parsed.searchParams.get('utm_campaign'), 'modern-php-mastery');
+  assert.equal(parsed.searchParams.get('utm_content'), 'php-85-pipe-operator');
+});
+
+test('social distribution packages include required files, valid UTM URLs, draft locks, and <= 280 char X posts', () => {
+  const expectedPackages = [
+    { slug: 'php-84-property-hooks', readyForManualPosting: true },
+    { slug: 'php-85-pipe-operator', readyForManualPosting: true },
+    { slug: 'php-86-release-overview', readyForManualPosting: false },
+    { slug: 'php-86-partial-function-application', readyForManualPosting: false },
+  ];
+
+  for (const pkg of expectedPackages) {
+    const dir = path.resolve('content/social', pkg.slug);
+    for (const file of ['linkedin.md', 'facebook.md', 'x-thread.md', 'metadata.json']) {
+      assert.equal(fs.existsSync(path.join(dir, file)), true, `missing ${pkg.slug}/${file}`);
+    }
+
+    const meta = JSON.parse(fs.readFileSync(path.join(dir, 'metadata.json'), 'utf8'));
+    assert.equal(meta.readyForManualPosting, pkg.readyForManualPosting);
+
+    for (const platform of ['linkedin', 'facebook', 'x']) {
+      const u = new URL(meta.utmLinks[platform]);
+      assert.equal(u.searchParams.get('utm_source'), platform);
+      assert.equal(u.searchParams.get('utm_medium'), 'social');
+    }
+
+    const xMarkdown = fs.readFileSync(path.join(dir, 'x-thread.md'), 'utf8');
+    const posts = [...xMarkdown.matchAll(/## Post \d+\r?\n([\s\S]*?)(?=\r?\n## Post |\s*$)/g)];
+    assert.ok(posts.length >= 4, `${pkg.slug}/x-thread.md must contain >= 4 posts`);
+    for (const match of posts) {
+      assert.ok(match[1].trim().length <= 280, `${pkg.slug} has X post > 280 chars`);
+    }
+  }
 });

@@ -7,6 +7,8 @@ import {
   getRelatedArticles,
   getUniqueTags,
   getUniqueCategories,
+  getAvailableArticleFacets,
+  extractMarkdownHeadings,
   isArticlePublic,
   buildCompatibilityDisplay,
   filterTocHeadings,
@@ -26,6 +28,8 @@ export {
   getRelatedArticles,
   getUniqueTags,
   getUniqueCategories,
+  getAvailableArticleFacets,
+  extractMarkdownHeadings,
   buildCompatibilityDisplay,
   filterTocHeadings,
 };

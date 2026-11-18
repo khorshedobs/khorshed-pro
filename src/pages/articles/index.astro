@@ -1,6 +1,8 @@
 ---
-import { Rss } from '@lucide/astro';
+import { RotateCcw, Rss, Search, X } from '@lucide/astro';
 import {
+  extractMarkdownHeadings,
+  getAvailableArticleFacets,
   getPublishedArticles,
   getUniqueCategories,
   getUniqueTags,
@@ -17,6 +19,7 @@ import ArticleRow from '@/components/article/ArticleRow.astro';
 const articles = await getPublishedArticles();
 const categories = getUniqueCategories(articles);
 const tags = getUniqueTags(articles);
+const facets = getAvailableArticleFacets(articles);
 
 const tagCounts = new Map<string, number>();
 for (const article of articles) {
@@ -47,6 +50,22 @@ const breadcrumbs: BreadcrumbItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Articles' },
 ];
+
+function buildSearchText(article: (typeof articles)[number]): string {
+  const headings = extractMarkdownHeadings(article.body).join(' ');
+  return [
+    article.data.title,
+    article.data.description,
+    article.data.category,
+    article.data.sectionCategory,
+    article.data.phpVersion ? `PHP ${article.data.phpVersion}` : '',
+    article.data.tags.join(' '),
+    headings,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
 ---
 
 <BaseLayout
@@ -96,69 +115,418 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       ) : (
         <>
-          {(categories.length > 0 || tags.length > 0) && (
-            <section
-              aria-label="Topics covered"
-              class="mt-8 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 sm:p-5"
-            >
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
-                  Topics in Archive
-                </p>
-                <div class="flex flex-wrap items-center gap-2">
-                  {categories.map((category) => (
-                    <span class="inline-flex items-center rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1 text-xs font-semibold text-[var(--text-primary)]">
-                      {category}
-                    </span>
-                  ))}
-                  {tags.map((tag) => (
-                    <span class="inline-flex items-center gap-1.5 rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1 font-mono text-xs text-[var(--text-secondary)]">
-                      <span>{tag}</span>
-                      <span class="text-[11px] opacity-70">
-                        ({tagCounts.get(tag) ?? 0})
-                      </span>
-                    </span>
-                  ))}
-                </div>
+          <!-- Static Search & Meaningful Facet Filters -->
+          <section
+            aria-label="Search and filter articles"
+            class="mt-8 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 sm:p-6"
+          >
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div class="relative flex-1">
+                <label for="article-search-input" class="sr-only">
+                  Search articles by title, PHP version, tag, or section heading
+                </label>
+                <Search
+                  class="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]"
+                  aria-hidden="true"
+                />
+                <input
+                  id="article-search-input"
+                  type="search"
+                  placeholder="Search articles, PHP versions, tags, or headings..."
+                  autocomplete="off"
+                  class="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] py-2.5 pr-10 pl-10 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] focus:outline-none"
+                />
+                <button
+                  id="article-search-clear"
+                  type="button"
+                  aria-label="Clear search query"
+                  class="hidden absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-1 text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+                >
+                  <X class="h-4 w-4" aria-hidden="true" />
+                </button>
               </div>
-            </section>
-          )}
 
-          {leadArticle && (
-            <section aria-labelledby="latest-lead-heading" class="mt-12">
-              <SectionHeading
-                id="latest-lead-heading"
-                eyebrow="Most Recent"
-                title="Latest Essay"
-              />
-              <FeaturedArticleLead
-                article={leadArticle}
-                codeExcerpt={leadCodeExcerpt}
-                codeTitle="src/Support/Slugger.php"
-              />
-            </section>
-          )}
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <p
+                  id="article-filter-status"
+                  aria-live="polite"
+                  class="text-xs font-medium text-[var(--text-secondary)]"
+                >
+                  Showing {articles.length} of {articles.length}{' '}
+                  {articles.length === 1 ? 'article' : 'articles'}
+                </p>
 
-          {archiveArticles.length > 0 && (
-            <section
-              aria-labelledby="all-articles-heading"
-              class="mt-14 border-t border-[var(--border-color)] pt-12"
-            >
-              <SectionHeading
-                id="all-articles-heading"
-                eyebrow="Chronological Archive"
-                title="Earlier Essays"
-                description="Ordered sequentially from newest to oldest."
-              />
-              <div class="divide-y divide-[var(--border-color)] border-y border-[var(--border-color)]">
-                {archiveArticles.map((article) => (
-                  <ArticleRow article={article} />
+                <button
+                  id="article-filters-reset"
+                  type="button"
+                  class="hidden items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+                >
+                  <RotateCcw class="h-3 w-3" aria-hidden="true" />
+                  <span>Reset filters</span>
+                </button>
+              </div>
+            </div>
+
+            {(facets.phpVersions.length > 0 || facets.sectionCategories.length > 0 || facets.difficulties.length > 1) && (
+              <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-[var(--border-color)] pt-4">
+                {facets.phpVersions.length > 0 && (
+                  <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by PHP version">
+                    <span class="mr-1 text-xs font-semibold text-[var(--text-secondary)]">
+                      PHP:
+                    </span>
+                    <button
+                      type="button"
+                      data-filter-group="php"
+                      data-filter-value="all"
+                      aria-pressed="true"
+                      class="filter-pill is-selected"
+                    >
+                      All
+                    </button>
+                    {facets.phpVersions.map((ver) => (
+                      <button
+                        type="button"
+                        data-filter-group="php"
+                        data-filter-value={ver}
+                        aria-pressed="false"
+                        class="filter-pill font-mono"
+                      >
+                        PHP {ver}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {facets.sectionCategories.length > 1 && (
+                  <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by category">
+                    <span class="mr-1 text-xs font-semibold text-[var(--text-secondary)]">
+                      Topic:
+                    </span>
+                    <button
+                      type="button"
+                      data-filter-group="category"
+                      data-filter-value="all"
+                      aria-pressed="true"
+                      class="filter-pill is-selected"
+                    >
+                      All
+                    </button>
+                    {facets.sectionCategories.map((cat) => (
+                      <button
+                        type="button"
+                        data-filter-group="category"
+                        data-filter-value={cat}
+                        aria-pressed="false"
+                        class="filter-pill"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {facets.difficulties.length > 1 && (
+                  <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by difficulty">
+                    <span class="mr-1 text-xs font-semibold text-[var(--text-secondary)]">
+                      Level:
+                    </span>
+                    <button
+                      type="button"
+                      data-filter-group="difficulty"
+                      data-filter-value="all"
+                      aria-pressed="true"
+                      class="filter-pill is-selected"
+                    >
+                      All
+                    </button>
+                    {facets.difficulties.map((diff) => (
+                      <button
+                        type="button"
+                        data-filter-group="difficulty"
+                        data-filter-value={diff}
+                        aria-pressed="false"
+                        class="filter-pill"
+                      >
+                        {diff}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(categories.length > 0 || tags.length > 0) && (
+              <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--border-color)] pt-4">
+                <span class="mr-1 text-xs font-semibold tracking-wider text-[var(--text-secondary)] uppercase">
+                  Tags:
+                </span>
+                {tags.map((tag) => (
+                  <button
+                    type="button"
+                    data-tag-quick={tag}
+                    class="inline-flex items-center gap-1 rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)] px-2 py-0.5 font-mono text-xs text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+                  >
+                    <span>{tag}</span>
+                    <span class="text-[11px] opacity-70">({tagCounts.get(tag) ?? 0})</span>
+                  </button>
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </section>
+
+          <!-- Default Editorial View (Lead + Rows) -->
+          <div id="default-editorial-archive">
+            {leadArticle && (
+              <section aria-labelledby="latest-lead-heading" class="mt-12">
+                <SectionHeading
+                  id="latest-lead-heading"
+                  eyebrow="Most Recent"
+                  title="Latest Essay"
+                />
+                <FeaturedArticleLead
+                  article={leadArticle}
+                  codeExcerpt={leadCodeExcerpt}
+                  codeTitle="src/Support/Slugger.php"
+                />
+              </section>
+            )}
+
+            {archiveArticles.length > 0 && (
+              <section
+                aria-labelledby="all-articles-heading"
+                class="mt-14 border-t border-[var(--border-color)] pt-12"
+              >
+                <SectionHeading
+                  id="all-articles-heading"
+                  eyebrow="Chronological Archive"
+                  title="Earlier Essays"
+                  description="Ordered sequentially from newest to oldest."
+                />
+                <div class="divide-y divide-[var(--border-color)] border-y border-[var(--border-color)]">
+                  {archiveArticles.map((article) => (
+                    <ArticleRow article={article} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          <!-- Unified Filtered Results View (Hidden unless search/filter is active) -->
+          <section
+            id="filtered-archive-results"
+            aria-label="Filtered articles"
+            class="mt-10 hidden"
+          >
+            <div class="divide-y divide-[var(--border-color)] border-y border-[var(--border-color)]">
+              {articles.map((article) => (
+                <div
+                  data-article-item
+                  data-search={buildSearchText(article)}
+                  data-php={article.data.phpVersion ?? ''}
+                  data-category={article.data.sectionCategory}
+                  data-difficulty={article.data.difficulty ?? ''}
+                >
+                  <ArticleRow article={article} />
+                </div>
+              ))}
+            </div>
+
+            <div
+              id="article-filter-empty"
+              class="hidden mt-8 rounded-2xl border border-dashed border-[var(--border-color)] bg-[var(--bg-surface)] px-6 py-12 text-center"
+            >
+              <h2 class="text-lg font-semibold text-[var(--text-primary)]">
+                No matching articles found
+              </h2>
+              <p class="mx-auto mt-2 max-w-md text-sm text-[var(--text-secondary)]">
+                Try adjusting your search keywords or clearing one of the PHP version, topic, or
+                difficulty filters.
+              </p>
+              <button
+                id="article-empty-reset"
+                type="button"
+                class="mt-5 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--accent)]"
+              >
+                <RotateCcw class="h-4 w-4" aria-hidden="true" />
+                <span>Clear all filters</span>
+              </button>
+            </div>
+          </section>
         </>
       )
     }
   </Container>
 </BaseLayout>
+
+<style>
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    padding: 0.25rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
+  }
+
+  .filter-pill:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+  }
+
+  .filter-pill.is-selected {
+    border-color: var(--accent);
+    background-color: var(--accent-subtle);
+    color: var(--accent);
+    font-weight: 600;
+  }
+</style>
+
+<script>
+  function initArticleArchiveFilters() {
+    const searchInput = document.getElementById('article-search-input') as HTMLInputElement | null;
+    const clearSearchBtn = document.getElementById('article-search-clear');
+    const resetBtn = document.getElementById('article-filters-reset');
+    const emptyResetBtn = document.getElementById('article-empty-reset');
+    const statusEl = document.getElementById('article-filter-status');
+    const defaultArchive = document.getElementById('default-editorial-archive');
+    const filteredSection = document.getElementById('filtered-archive-results');
+    const emptyState = document.getElementById('article-filter-empty');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-article-item]'));
+    const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-filter-group]'));
+    const quickTagButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tag-quick]'));
+
+    if (!searchInput || !defaultArchive || !filteredSection || !statusEl) return;
+    if (searchInput.dataset.bound === 'true') return;
+    searchInput.dataset.bound = 'true';
+
+    const state = {
+      q: '',
+      php: 'all',
+      category: 'all',
+      difficulty: 'all',
+    };
+
+    const syncUrl = () => {
+      const params = new URLSearchParams();
+      if (state.q) params.set('q', state.q);
+      if (state.php !== 'all') params.set('php', state.php);
+      if (state.category !== 'all') params.set('category', state.category);
+      if (state.difficulty !== 'all') params.set('difficulty', state.difficulty);
+
+      const query = params.toString();
+      const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+      window.history.replaceState(null, '', nextUrl);
+    };
+
+    const updateFilterButtonUI = () => {
+      filterButtons.forEach((btn) => {
+        const group = btn.getAttribute('data-filter-group') as 'php' | 'category' | 'difficulty';
+        const val = btn.getAttribute('data-filter-value') ?? 'all';
+        const selected = state[group] === val;
+        btn.classList.toggle('is-selected', selected);
+        btn.setAttribute('aria-pressed', String(selected));
+      });
+    };
+
+    const applyFilters = (writeUrl = true) => {
+      const query = state.q.trim().toLowerCase();
+      const isFiltered =
+        query.length > 0 ||
+        state.php !== 'all' ||
+        state.category !== 'all' ||
+        state.difficulty !== 'all';
+
+      clearSearchBtn?.classList.toggle('hidden', query.length === 0);
+      resetBtn?.classList.toggle('hidden', !isFiltered);
+      resetBtn?.classList.toggle('inline-flex', isFiltered);
+
+      defaultArchive.classList.toggle('hidden', isFiltered);
+      filteredSection.classList.toggle('hidden', !isFiltered);
+
+      let visibleCount = 0;
+      items.forEach((item) => {
+        const text = item.getAttribute('data-search') ?? '';
+        const itemPhp = item.getAttribute('data-php') ?? '';
+        const itemCat = item.getAttribute('data-category') ?? '';
+        const itemDiff = item.getAttribute('data-difficulty') ?? '';
+
+        const matchesQuery = !query || text.includes(query);
+        const matchesPhp = state.php === 'all' || itemPhp === state.php;
+        const matchesCat = state.category === 'all' || itemCat === state.category;
+        const matchesDiff = state.difficulty === 'all' || itemDiff === state.difficulty;
+
+        const visible = matchesQuery && matchesPhp && matchesCat && matchesDiff;
+        item.classList.toggle('hidden', !visible);
+        if (visible) visibleCount++;
+      });
+
+      const total = items.length;
+      const shown = isFiltered ? visibleCount : total;
+      statusEl.textContent = `Showing ${shown} of ${total} ${total === 1 ? 'article' : 'articles'}`;
+      emptyState?.classList.toggle('hidden', !isFiltered || visibleCount > 0);
+
+      updateFilterButtonUI();
+      if (writeUrl) syncUrl();
+    };
+
+    // Hydrate state from URL query params
+    const initialParams = new URLSearchParams(window.location.search);
+    state.q = initialParams.get('q') ?? '';
+    state.php = initialParams.get('php') ?? 'all';
+    state.category = initialParams.get('category') ?? 'all';
+    state.difficulty = initialParams.get('difficulty') ?? 'all';
+    searchInput.value = state.q;
+    applyFilters(false);
+
+    searchInput.addEventListener('input', () => {
+      state.q = searchInput.value;
+      applyFilters(true);
+    });
+
+    clearSearchBtn?.addEventListener('click', () => {
+      state.q = '';
+      searchInput.value = '';
+      applyFilters(true);
+      searchInput.focus();
+    });
+
+    const resetAll = () => {
+      state.q = '';
+      state.php = 'all';
+      state.category = 'all';
+      state.difficulty = 'all';
+      searchInput.value = '';
+      applyFilters(true);
+    };
+
+    resetBtn?.addEventListener('click', resetAll);
+    emptyResetBtn?.addEventListener('click', resetAll);
+
+    filterButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const group = btn.getAttribute('data-filter-group') as 'php' | 'category' | 'difficulty';
+        const val = btn.getAttribute('data-filter-value') ?? 'all';
+        state[group] = val;
+        applyFilters(true);
+      });
+    });
+
+    quickTagButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tag = btn.getAttribute('data-tag-quick') ?? '';
+        state.q = tag;
+        searchInput.value = tag;
+        applyFilters(true);
+        searchInput.focus();
+      });
+    });
+  }
+
+  initArticleArchiveFilters();
+  document.addEventListener('astro:after-swap', initArticleArchiveFilters);
+</script>

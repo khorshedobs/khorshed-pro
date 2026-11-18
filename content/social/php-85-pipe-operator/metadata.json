@@ -1,0 +1,46 @@
+{
+  "slug": "php-85-pipe-operator",
+  "title": "PHP 8.5 Pipe Operator: Readable Left-to-Right Data Transformations",
+  "phpVersion": "8.5",
+  "series": "modern-php-mastery",
+  "articleStatus": "published",
+  "draft": false,
+  "technicalVerificationStatus": "runtime-tested",
+  "readyForManualPosting": true,
+  "canonicalUrl": "https://khorshed.pro/articles/php-85-pipe-operator/",
+  "ogImagePath": "/og/articles/php-85-pipe-operator.png",
+  "utmLinks": {
+    "linkedin": "https://khorshed.pro/articles/php-85-pipe-operator/?utm_source=linkedin&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-85-pipe-operator",
+    "facebook": "https://khorshed.pro/articles/php-85-pipe-operator/?utm_source=facebook&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-85-pipe-operator",
+    "x": "https://khorshed.pro/articles/php-85-pipe-operator/?utm_source=x&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-85-pipe-operator"
+  },
+  "xPostCharCounts": [
+    {
+      "post": 1,
+      "length": 212,
+      "withinLimit": true
+    },
+    {
+      "post": 2,
+      "length": 191,
+      "withinLimit": true
+    },
+    {
+      "post": 3,
+      "length": 166,
+      "withinLimit": true
+    },
+    {
+      "post": 4,
+      "length": 191,
+      "withinLimit": true
+    },
+    {
+      "post": 5,
+      "length": 219,
+      "withinLimit": true
+    }
+  ],
+  "generatedAt": "2026-11-18",
+  "automationMode": "manual-copy-only"
+}

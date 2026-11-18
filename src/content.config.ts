@@ -18,16 +18,39 @@ const articles = defineCollection({
     updatedAt: z.coerce.date().optional(),
     draft: z.boolean().default(false),
     status: z
-      .enum(['draft', 'technical-review', 'ready', 'published'])
+      .enum([
+        'idea',
+        'researching',
+        'drafting',
+        'draft',
+        'technical-review',
+        'editorial-review',
+        'ready',
+        'published',
+      ])
       .default('published'),
     featured: z.boolean().default(false),
     category: z.string().min(1),
+    sectionCategory: z
+      .enum([
+        'Language Features',
+        'Object-Oriented Design',
+        'Functional Programming',
+        'Performance',
+        'Architecture',
+        'Security',
+        'Compatibility',
+      ])
+      .default('Language Features'),
     tags: z.array(z.string()).default([]),
     series: z.string().optional(),
     seriesOrder: z.number().int().positive().optional(),
     phpVersion: z.string().regex(versionPattern).optional(),
     minimumPhpVersion: z.string().regex(strictVersionPattern).optional(),
     testedPhpVersions: z.array(z.string().regex(testedVersionPattern)).default([]),
+    technicalVerificationStatus: z
+      .enum(['unverified', 'syntax-checked', 'runtime-tested', 'awaiting-php-release'])
+      .optional(),
     deprecatedIn: z.string().regex(strictVersionPattern).optional(),
     removedIn: z.string().regex(strictVersionPattern).optional(),
     requiredExtensions: z.array(z.string()).default([]),
@@ -38,6 +61,24 @@ const articles = defineCollection({
     repositoryURL: z.url().optional(),
     examplePath: z.string().optional(),
     testsPath: z.string().optional(),
+    researchReferences: z
+      .array(
+        z.object({
+          title: z.string().min(1),
+          url: z.url(),
+          status: z
+            .enum([
+              'Proposed RFC',
+              'Accepted RFC',
+              'Implemented',
+              'Released Documentation',
+              'Deprecated',
+              'Removed',
+            ])
+            .optional(),
+        }),
+      )
+      .default([]),
     relatedArticles: z.array(z.string()).default([]),
     isSampleContent: z.boolean().default(false),
   }),

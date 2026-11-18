@@ -41,6 +41,8 @@ const canonicalUrl =
   article.data.canonicalURL ??
   new URL(`/articles/${article.id}/`, siteConfig.siteUrl).href;
 
+const socialImage = article.data.coverImage ?? `/og/articles/${article.id}.png`;
+
 const shortArticleTitle =
   article.data.title.split(':')[0]?.trim() || article.data.title;
 
@@ -67,7 +69,7 @@ breadcrumbs.push({
   title={article.data.title}
   description={article.data.description}
   canonicalURL={canonicalUrl}
-  image={article.data.coverImage}
+  image={socialImage}
   type="article"
   breadcrumbs={breadcrumbs}
   article={{
@@ -78,7 +80,7 @@ breadcrumbs.push({
     author: article.data.author,
     tags: article.data.tags,
     category: article.data.category,
-    image: article.data.coverImage,
+    image: socialImage,
   }}
 >
   <ReadingProgress targetId="article-content-body" />

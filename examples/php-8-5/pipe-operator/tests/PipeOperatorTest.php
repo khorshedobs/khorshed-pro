@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../src/TagNormalizer.php';
 require_once __DIR__ . '/../src/Slugger.php';
+require_once __DIR__ . '/../src/PayloadSanitizer.php';
 
+use KhorshedPro\Examples\Php85\PipeOperator\PayloadSanitizer;
 use KhorshedPro\Examples\Php85\PipeOperator\Slugger;
 use KhorshedPro\Examples\Php85\PipeOperator\TagNormalizer;
 
@@ -24,5 +26,17 @@ assertSameValue($expectedTags, TagNormalizer::normalizeNested($raw), 'Nested tag
 assertSameValue($expectedTags, TagNormalizer::normalizePiped($raw), 'Piped tag normalization matches');
 assertSameValue('modern-php-mastery', Slugger::normalize('  Modern PHP Mastery!  '), 'Slugger normalizes title');
 assertSameValue('php-8-5-pipe-operator', Slugger::normalize('  PHP 8.5: Pipe Operator |>  '), 'Slugger strips punctuation');
+
+$sanitized = PayloadSanitizer::sanitize([
+    'email' => '  Dev@Khorshed.Pro  ',
+    'title' => '  PHP 8.5: Pipe Operator  ',
+    'tags' => ' php , pipelines , php ',
+]);
+
+assertSameValue([
+    'email' => 'dev@khorshed.pro',
+    'slug' => 'php-8-5-pipe-operator',
+    'tags' => ['php', 'pipelines'],
+], $sanitized, 'PayloadSanitizer cleans multi-field request payload');
 
 echo "OK: PipeOperatorTest passed on PHP " . PHP_VERSION . PHP_EOL;

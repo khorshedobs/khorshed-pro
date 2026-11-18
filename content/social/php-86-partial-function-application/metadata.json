@@ -1,0 +1,41 @@
+{
+  "slug": "php-86-partial-function-application",
+  "title": "PHP 8.6 Partial Function Application: Beyond Simple Callbacks",
+  "phpVersion": "8.6",
+  "series": "modern-php-mastery",
+  "articleStatus": "technical-review",
+  "draft": true,
+  "technicalVerificationStatus": "awaiting-php-release",
+  "readyForManualPosting": false,
+  "canonicalUrl": "https://khorshed.pro/articles/php-86-partial-function-application/",
+  "ogImagePath": "/og/default.png",
+  "utmLinks": {
+    "linkedin": "https://khorshed.pro/articles/php-86-partial-function-application/?utm_source=linkedin&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-86-partial-function-application",
+    "facebook": "https://khorshed.pro/articles/php-86-partial-function-application/?utm_source=facebook&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-86-partial-function-application",
+    "x": "https://khorshed.pro/articles/php-86-partial-function-application/?utm_source=x&utm_medium=social&utm_campaign=modern-php-mastery&utm_content=php-86-partial-function-application"
+  },
+  "xPostCharCounts": [
+    {
+      "post": 1,
+      "length": 264,
+      "withinLimit": true
+    },
+    {
+      "post": 2,
+      "length": 225,
+      "withinLimit": true
+    },
+    {
+      "post": 3,
+      "length": 229,
+      "withinLimit": true
+    },
+    {
+      "post": 4,
+      "length": 255,
+      "withinLimit": true
+    }
+  ],
+  "generatedAt": "2026-11-18",
+  "automationMode": "manual-copy-only"
+}

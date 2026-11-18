@@ -7,12 +7,15 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "npm run validate:articles && astro build",
+    "article:new": "node scripts/new-article.mjs",
+    "og:generate": "node scripts/generate-og-images.mjs",
+    "social:generate": "node scripts/generate-social-package.mjs",
+    "build": "npm run og:generate && npm run validate:articles && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "validate:articles": "node scripts/validate-articles.mjs",
     "validate:examples": "node scripts/validate-examples.mjs",
-    "check": "npm run validate:articles && astro check && tsc --noEmit",
+    "check": "npm run og:generate && npm run validate:articles && astro check && tsc --noEmit",
     "test": "node --test tests/article-engine.test.mjs",
     "test:build": "node --test tests/build-output.test.mjs"
   },

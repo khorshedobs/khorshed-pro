@@ -1,4 +1,12 @@
-export type ArticleStatus = 'draft' | 'technical-review' | 'ready' | 'published';
+export type ArticleStatus =
+  | 'idea'
+  | 'researching'
+  | 'drafting'
+  | 'draft'
+  | 'technical-review'
+  | 'editorial-review'
+  | 'ready'
+  | 'published';
 
 export interface ArticleLike {
   id: string;
@@ -12,6 +20,7 @@ export interface ArticleLike {
     status?: ArticleStatus;
     featured: boolean;
     category: string;
+    sectionCategory?: string;
     tags: string[];
     series?: string;
     seriesOrder?: number;
@@ -21,6 +30,7 @@ export interface ArticleLike {
     deprecatedIn?: string;
     removedIn?: string;
     requiredExtensions?: string[];
+    difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
     relatedArticles: string[];
   };
 }
@@ -178,6 +188,52 @@ export function getUniqueCategories<T extends ArticleLike>(articles: T[]): strin
     categories.add(article.data.category);
   }
   return Array.from(categories).sort((a, b) => a.localeCompare(b));
+}
+
+export interface AvailableArticleFacets {
+  phpVersions: string[];
+  sectionCategories: string[];
+  difficulties: string[];
+}
+
+export function getAvailableArticleFacets<T extends ArticleLike>(
+  articles: T[],
+): AvailableArticleFacets {
+  const phpSet = new Set<string>();
+  const catSet = new Set<string>();
+  const diffSet = new Set<string>();
+
+  for (const article of articles) {
+    if (!isArticlePublic(article)) continue;
+    if (article.data.phpVersion) phpSet.add(article.data.phpVersion);
+    if (article.data.sectionCategory) catSet.add(article.data.sectionCategory);
+    if (article.data.difficulty) diffSet.add(article.data.difficulty);
+  }
+
+  const difficultyOrder = ['Beginner', 'Intermediate', 'Advanced'];
+
+  return {
+    phpVersions: Array.from(phpSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+    sectionCategories: Array.from(catSet).sort((a, b) => a.localeCompare(b)),
+    difficulties: Array.from(diffSet).sort(
+      (a, b) => difficultyOrder.indexOf(a) - difficultyOrder.indexOf(b),
+    ),
+  };
+}
+
+export function extractMarkdownHeadings(body: string | undefined): string[] {
+  if (!body) return [];
+  const cleaned = body.replace(/```[\s\S]*?```/g, '');
+  const headings: string[] = [];
+
+  for (const line of cleaned.split(/\r?\n/)) {
+    const match = line.match(/^#{2,3}\s+(.+?)\s*$/);
+    if (match?.[1]) {
+      headings.push(match[1].replace(/[`*_[\]()]/g, '').trim());
+    }
+  }
+
+  return headings;
 }
 
 export function buildCompatibilityDisplay(data: {
